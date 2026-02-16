@@ -18,28 +18,55 @@
         .dark { --sidebar-bg: #1e1f20; --chat-bg: #131314; }
         body { background-color: var(--chat-bg); font-family: 'Segoe UI', system-ui, sans-serif; height: 100vh; overflow: hidden; }
         
-        .message-row { display: flex; padding: 1.5rem 0; animation: fadeIn 0.4s ease; border-bottom: 1px solid rgba(0,0,0,0.02); }
-        .dark .message-row { border-bottom: 1px solid rgba(255,255,255,0.02); }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 10px; margin-right: 1.5rem; flex-shrink: 0; }
+        /* Watermark Logo */
+        #messages-container { position: relative; }
+        #messages-container::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            background-image: url('logo.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.03; /* Very subtle */
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Alignment Logic */
+        .message-row { display: flex; width: 100%; margin-bottom: 1.5rem; position: relative; z-index: 1; animation: fadeIn 0.3s ease; }
+        
+        /* User on Right */
+        .row-user { justify-content: flex-end; }
+        .row-user .message-wrapper { flex-direction: row-reverse; max-width: 80%; }
+        .row-user .avatar { margin-right: 0; margin-left: 1rem; }
+        .row-user .content { background: #f0f4f9; border-radius: 18px 4px 18px 18px; padding: 12px 16px; color: #1f1f1f; }
+        .dark .row-user .content { background: #2f2f2f; color: #e3e3e3; }
+
+        /* AI on Left */
+        .row-ai { justify-content: flex-start; }
+        .row-ai .message-wrapper { display: flex; max-width: 85%; }
+        .row-ai .avatar { margin-right: 1rem; }
+        .row-ai .content { padding: 12px 0; } /* AI doesn't need a bubble, looks cleaner like Gemini */
+
+        .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 10px; flex-shrink: 0; }
         .ai-avatar { background: linear-gradient(135deg, #4285f4, #9b72f3); color: white; }
         .user-avatar { background: #e8eaed; color: #5f6368; }
-        .content { flex: 1; font-size: 16px; line-height: 1.6; color: #3c4043; }
-        .dark .content { color: #e3e3e3; }
 
-        /* Code Blocks & Copy Button */
+        /* Code Blocks */
         pre { background: #1e1e1e; color: #d4d4d4; padding: 1.5rem; border-radius: 12px; margin: 1rem 0; overflow-x: auto; position: relative; border: 1px solid #333; }
-        code { font-family: 'Consolas', monospace; font-size: 0.9em; }
-        .copy-btn { position: absolute; top: 10px; right: 10px; background: #333; color: #ccc; border: 1px solid #444; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: 0.2s; }
-        .copy-btn:hover { background: #444; color: white; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: #333; color: #ccc; border: 1px solid #444; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; }
 
         .input-pill { background: #f0f4f9; border-radius: 28px; padding: 0.75rem 1.25rem; display: flex; align-items: flex-end; }
         .dark .input-pill { background: #1e1f20; }
-        .input-pill:focus-within { background: #fff; border: 1px solid #dfe1e5; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .dark .input-pill:focus-within { background: #1e1f20; border-color: #444746; }
-
+        
         #auth-overlay { position: fixed; inset: 0; z-index: 200; background: white; display: flex; align-items: center; justify-content: center; }
         .dark #auth-overlay { background: #131314; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="flex h-full text-slate-900 dark:text-slate-100">
@@ -48,28 +75,26 @@
         <div class="max-w-sm w-full p-8 text-center">
             <img src="logo.png" class="w-16 h-16 mx-auto mb-6">
             <h1 id="auth-title" class="text-3xl font-bold mb-2">RiteGPT</h1>
-            <p id="auth-subtitle" class="text-slate-500 mb-8 text-sm">Sign in to sync your conversations.</p>
+            <p id="auth-subtitle" class="text-slate-500 mb-8 text-sm">Sign in to start your session.</p>
             <form id="auth-form" class="space-y-4">
                 <input type="email" id="email" placeholder="Email" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:border-blue-500 transition-all">
                 <input type="password" id="password" placeholder="Password" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:border-blue-500 transition-all">
                 <button type="submit" id="auth-submit" class="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all">Sign In</button>
             </form>
             <div class="mt-6 text-sm">
-                <span id="toggle-text" class="text-slate-500">New to RiteGPT?</span>
+                <span id="toggle-text" class="text-slate-500">New?</span>
                 <button id="toggle-auth" class="text-blue-600 font-bold ml-1 hover:underline">Create account</button>
             </div>
-            <button id="forgot-btn" class="mt-4 text-xs text-slate-400 block mx-auto">Forgot Password?</button>
         </div>
     </div>
 
     <aside id="sidebar" class="w-64 bg-[#f0f4f9] dark:bg-[#1e1f20] hidden md:flex flex-col border-r border-transparent">
         <div class="p-6">
-            <button onclick="newChat()" class="w-full flex items-center gap-3 px-4 py-3 bg-white/60 dark:bg-white/5 rounded-full text-sm font-medium hover:bg-white transition-all">
+            <button onclick="newChat()" class="w-full flex items-center gap-3 px-4 py-3 bg-white/60 dark:bg-white/5 rounded-full text-sm font-medium hover:bg-white transition-all shadow-sm">
                 <i class="fa-solid fa-plus"></i> New Chat
             </button>
         </div>
-        <div class="flex-1 overflow-y-auto px-4">
-             </div>
+        <div class="flex-1"></div>
         <div class="p-4 border-t dark:border-zinc-800">
             <div id="admin-gate" class="hidden">
                 <button onclick="document.getElementById('set-modal').classList.remove('hidden')" class="w-full text-left p-3 text-[10px] font-black uppercase tracking-widest text-blue-500">
@@ -83,14 +108,14 @@
     </aside>
 
     <main class="flex-1 flex flex-col h-full relative">
-        <header class="h-16 flex items-center justify-between px-6">
+        <header class="h-16 flex items-center justify-between px-6 z-10">
             <button class="md:hidden" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
             <span class="text-xl font-medium tracking-tight">RiteGPT</span>
             <div class="w-8"></div>
         </header>
 
         <div id="messages-container" class="flex-1 overflow-y-auto px-6">
-            <div class="max-w-3xl mx-auto py-10">
+            <div class="max-w-4xl mx-auto py-10 relative">
                 <div id="chat-start" class="text-center py-20">
                     <h2 class="text-4xl font-medium text-slate-200 dark:text-zinc-800">How can I help today?</h2>
                 </div>
@@ -99,9 +124,9 @@
             </div>
         </div>
 
-        <div class="p-4 md:pb-8">
+        <div class="p-4 md:pb-8 z-10">
             <div class="max-w-3xl mx-auto">
-                <div class="input-pill">
+                <div class="input-pill shadow-sm">
                     <textarea id="chat-input" rows="1" placeholder="Enter a prompt here" class="flex-1 bg-transparent p-2 outline-none resize-none text-base max-h-40"></textarea>
                     <button id="send-btn" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors">
                         <i class="fa-solid fa-paper-plane text-xl"></i>
@@ -135,7 +160,6 @@
         let isSignUp = false;
         let system = { key: "", model: "" };
 
-        // --- AUTH TOGGLE ---
         document.getElementById('toggle-auth').onclick = () => {
             isSignUp = !isSignUp;
             document.getElementById('auth-title').innerText = isSignUp ? "Create Account" : "RiteGPT";
@@ -143,7 +167,6 @@
             document.getElementById('toggle-auth').innerText = isSignUp ? "Sign In" : "Create account";
         };
 
-        // --- AUTH SUBMIT ---
         document.getElementById('auth-form').onsubmit = async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
@@ -152,7 +175,7 @@
             if (isSignUp) {
                 const { error } = await _supabase.auth.signUp({ email, password });
                 if (error) alert(error.message);
-                else alert("Account created! Please Sign In.");
+                else alert("Account created! You can now Sign In.");
             } else {
                 const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
                 if (error) alert(error.message);
@@ -165,7 +188,6 @@
             }
         };
 
-        // --- CLOUD SYNC & HISTORY ---
         async function loadCloud() {
             const { data } = await _supabase.from('config').select('*').eq('key_name', 'admin_settings').single();
             if (data) { system.key = data.api_key; system.model = data.model_name; document.getElementById('model-tag').innerText = system.model; }
@@ -174,24 +196,16 @@
         async function loadHistory() {
             const { data: { user } } = await _supabase.auth.getUser();
             if (!user) return;
-
-            const { data, error } = await _supabase
-                .from('messages')
-                .select('*')
-                .order('created_at', { ascending: true });
-
+            const { data } = await _supabase.from('messages').select('*').order('created_at', { ascending: true });
             if (data && data.length > 0) {
                 document.getElementById('chat-start').style.display = 'none';
-                data.forEach(msg => {
-                    appendMsg(msg.role, msg.content, false); // Don't re-save to DB
-                });
+                data.forEach(msg => appendMsg(msg.role, msg.content, false));
             }
         }
 
         async function saveToCloud(role, content) {
             const { data: { user } } = await _supabase.auth.getUser();
-            if (!user) return;
-            await _supabase.from('messages').insert([{ user_id: user.id, role, content }]);
+            if (user) await _supabase.from('messages').insert([{ user_id: user.id, role, content }]);
         }
 
         async function saveSet() {
@@ -201,7 +215,6 @@
             location.reload();
         }
 
-        // --- RENDER & CHAT ---
         function renderMarkdown(text) {
             const html = marked.parse(text);
             const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -225,7 +238,7 @@
             document.getElementById('chat-start').style.display = 'none';
 
             appendMsg('user', prompt, true); 
-            const aiBox = appendMsg('ai', '<i class="fa-solid fa-circle-notch fa-spin text-blue-400"></i> Thinking...', false);
+            const aiBox = appendMsg('ai', '<i class="fa-solid fa-circle-notch fa-spin text-blue-400"></i>...', false);
 
             try {
                 const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -237,14 +250,18 @@
                 const aiResponse = d.choices[0].message.content;
                 aiBox.innerHTML = renderMarkdown(aiResponse);
                 saveToCloud('ai', aiResponse);
-            } catch { aiBox.innerText = "Connection error."; }
+            } catch { aiBox.innerText = "Error syncing with AI."; }
         }
 
         function appendMsg(role, content, shouldSave = false) {
             const div = document.createElement('div');
-            div.className = `message-row`;
-            div.innerHTML = `<div class="avatar ${role === 'user' ? 'user-avatar' : 'ai-avatar'}">${role === 'user' ? 'U' : 'RG'}</div>
-                             <div class="content">${role === 'ai' ? renderMarkdown(content) : content}</div>`;
+            div.className = `message-row row-${role}`;
+            div.innerHTML = `
+                <div class="message-wrapper">
+                    <div class="avatar ${role === 'user' ? 'user-avatar' : 'ai-avatar'}">${role === 'user' ? 'U' : 'RG'}</div>
+                    <div class="content">${role === 'ai' ? renderMarkdown(content) : content}</div>
+                </div>
+            `;
             document.getElementById('chat-flow').appendChild(div);
             if(shouldSave) saveToCloud(role, content);
             const container = document.getElementById('messages-container');
