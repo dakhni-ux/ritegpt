@@ -31,12 +31,20 @@
         .ai-bubble { background: #f1f5f9; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 0; }
         .dark .ai-bubble { background: #1e293b; color: #f1f5f9; }
 
-        #auth-overlay { position: fixed; inset: 0; z-index: 100; background: white; display: flex; align-items: center; justify-content: center; }
+        #auth-overlay { position: fixed; inset: 0; z-index: 100; background: white; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
         .dark #auth-overlay { background: #0f172a; }
         
-        /* Sidebar transition */
         #sidebar { transition: transform 0.3s ease; }
         @media (max-width: 768px) { #sidebar { position: absolute; height: 100%; z-index: 40; } }
+
+        .social-btn {
+            width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 1rem;
+            display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+            font-weight: 500; font-size: 0.875rem; transition: all 0.2s;
+        }
+        .dark .social-btn { border-color: #334155; }
+        .social-btn:hover { background-color: #f8fafc; }
+        .dark .social-btn:hover { background-color: #1e293b; }
     </style>
 </head>
 <body class="flex flex-row dark:text-white">
@@ -44,16 +52,36 @@
     <div class="watermark-layer"><img src="logo.png" onerror="this.src='./logo.png';"></div>
 
     <div id="auth-overlay">
-        <div class="max-w-md w-full p-8 text-center">
+        <div class="max-w-md w-full p-8 text-center my-auto">
             <img src="logo.png" class="w-20 h-20 mx-auto mb-4" onerror="this.src='./logo.png';">
             <h1 class="text-3xl font-black mb-6 tracking-tighter text-purple-600">RITE GPT</h1>
-            <form id="login-form" class="space-y-4 text-left">
+            
+            <form id="login-form" class="space-y-4 text-left mb-6">
                 <input type="email" id="auth-email" placeholder="Email" required class="w-full p-4 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500">
                 <input type="password" id="auth-password" placeholder="Password" required class="w-full p-4 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500">
                 <button type="submit" class="w-full py-4 bg-purple-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-transform">Sign In</button>
             </form>
-            <button id="guest-btn" class="mt-4 text-slate-400 text-sm">Continue as Guest</button>
-            <button id="forgot-btn" class="block mx-auto mt-2 text-purple-500 text-xs font-bold uppercase">Forgot Password?</button>
+
+            <div class="relative flex items-center gap-4 mb-6">
+                <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                <span class="text-xs text-slate-400 uppercase font-bold">Or Continue With</span>
+                <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="socialLogin('Google')" class="social-btn">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-5 h-5"> Google
+                </button>
+                <button onclick="socialLogin('Outlook')" class="social-btn">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" class="w-5 h-5"> Outlook
+                </button>
+                <button onclick="socialLogin('Apple')" class="social-btn">
+                    <i class="fa-brands fa-apple text-lg"></i> Apple ID
+                </button>
+            </div>
+
+            <button id="guest-btn" class="mt-6 text-slate-400 text-sm hover:underline">Continue as Guest</button>
+            <button id="forgot-btn" class="block mx-auto mt-2 text-purple-500 text-xs font-bold uppercase hover:underline">Forgot Password?</button>
         </div>
     </div>
 
@@ -111,25 +139,44 @@
         };
 
         const loginForm = document.getElementById('login-form');
+        const authOverlay = document.getElementById('auth-overlay');
+        const adminActions = document.getElementById('admin-actions');
         const messagesDiv = document.getElementById('messages-container');
         const chatInput = document.getElementById('chat-input');
         const sendBtn = document.getElementById('send-btn');
         const anchor = document.getElementById('anchor');
 
+        // Logic for Admin Password and Social Logins
         loginForm.onsubmit = (e) => {
             e.preventDefault();
-            const email = document.getElementById('auth-email').value;
+            const email = document.getElementById('auth-email').value.trim().toLowerCase();
             const pass = document.getElementById('auth-password').value;
-            if ((email === "admin@ritegpt.pro" || email === "admin@ritegpt.com") && pass === "Kani@2211$") {
-                document.getElementById('admin-actions').classList.remove('hidden');
-                document.getElementById('auth-overlay').style.display = 'none';
-            } else if (!email.includes('admin@')) {
-                document.getElementById('auth-overlay').style.display = 'none';
-            } else { alert("Incorrect Admin Credentials."); }
+            
+            const isAdmin = (email === "admin@ritegpt.pro" || email === "admin@ritegpt.com");
+
+            if (isAdmin) {
+                if (pass === "Kani@2211$") {
+                    adminActions.classList.remove('hidden');
+                    authOverlay.style.display = 'none';
+                } else {
+                    alert("Invalid Admin Password.");
+                }
+            } else {
+                // Allow non-admin emails to bypass for now as requested for "users"
+                authOverlay.style.display = 'none';
+            }
         };
 
-        document.getElementById('guest-btn').onclick = () => document.getElementById('auth-overlay').style.display = 'none';
-        document.getElementById('forgot-btn').onclick = () => alert("Reset link sent to " + document.getElementById('auth-email').value);
+        function socialLogin(provider) {
+            alert(provider + " login integration is coming soon! Continuing as guest for now.");
+            authOverlay.style.display = 'none';
+        }
+
+        document.getElementById('guest-btn').onclick = () => authOverlay.style.display = 'none';
+        document.getElementById('forgot-btn').onclick = () => {
+            const email = document.getElementById('auth-email').value;
+            alert(email ? "Reset link sent to " + email : "Please enter your email address.");
+        };
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
         function newChat() { messagesDiv.innerHTML = '<div id="anchor"></div>'; if(window.innerWidth < 768) toggleSidebar(); }
@@ -168,12 +215,12 @@
             const b = document.createElement('div');
             b.className = `bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble'}`;
             b.innerHTML = content;
-            messagesDiv.insertBefore(b, document.getElementById('anchor'));
+            messagesDiv.insertBefore(b, anchor);
             scrollToBottom();
             return b;
         }
 
-        function scrollToBottom() { document.getElementById('anchor').scrollIntoView({ behavior: 'smooth' }); }
+        function scrollToBottom() { anchor.scrollIntoView({ behavior: 'smooth' }); }
 
         sendBtn.onclick = handleSend;
         chatInput.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } };
