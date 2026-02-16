@@ -16,93 +16,86 @@
     <style>
         :root { --sidebar-bg: #f0f4f9; --chat-bg: #ffffff; }
         .dark { --sidebar-bg: #1e1f20; --chat-bg: #131314; }
-        body { background-color: var(--chat-bg); font-family: 'Segoe UI', system-ui, sans-serif; height: 100vh; overflow: hidden; }
+        body { background-color: var(--chat-bg); font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
         
-        /* Watermark Logo */
+        /* Logo Watermark */
         #messages-container { position: relative; }
         #messages-container::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px;
-            height: 300px;
-            background-image: url('logo.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            opacity: 0.03; /* Very subtle */
-            pointer-events: none;
-            z-index: 0;
+            content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 250px; height: 250px; background: url('logo.png') no-repeat center;
+            background-size: contain; opacity: 0.04; pointer-events: none; z-index: 0;
+        }
+
+        /* Branding Gradient */
+        .brand-text {
+            background: linear-gradient(135deg, #4285f4, #9b72f3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
         }
 
         /* Alignment Logic */
-        .message-row { display: flex; width: 100%; margin-bottom: 1.5rem; position: relative; z-index: 1; animation: fadeIn 0.3s ease; }
-        
-        /* User on Right */
+        .message-row { display: flex; width: 100%; margin-bottom: 2rem; position: relative; z-index: 1; animation: fadeIn 0.3s ease; }
         .row-user { justify-content: flex-end; }
-        .row-user .message-wrapper { flex-direction: row-reverse; max-width: 80%; }
-        .row-user .avatar { margin-right: 0; margin-left: 1rem; }
-        .row-user .content { background: #f0f4f9; border-radius: 18px 4px 18px 18px; padding: 12px 16px; color: #1f1f1f; }
+        .row-user .message-wrapper { display: flex; flex-direction: row-reverse; max-width: 80%; }
+        .row-user .content { background: #f0f4f9; border-radius: 18px 4px 18px 18px; padding: 12px 18px; color: #1f1f1f; margin-right: 12px; }
         .dark .row-user .content { background: #2f2f2f; color: #e3e3e3; }
 
-        /* AI on Left */
         .row-ai { justify-content: flex-start; }
         .row-ai .message-wrapper { display: flex; max-width: 85%; }
-        .row-ai .avatar { margin-right: 1rem; }
-        .row-ai .content { padding: 12px 0; } /* AI doesn't need a bubble, looks cleaner like Gemini */
+        .row-ai .content { padding: 8px 0; color: #3c4043; }
+        .dark .row-ai .content { color: #e3e3e3; }
 
-        .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 10px; flex-shrink: 0; }
-        .ai-avatar { background: linear-gradient(135deg, #4285f4, #9b72f3); color: white; }
-        .user-avatar { background: #e8eaed; color: #5f6368; }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 10px; flex-shrink: 0; }
+        .ai-avatar { background: linear-gradient(135deg, #4285f4, #9b72f3); color: white; margin-right: 15px; }
+        .user-avatar { background: #e8eaed; color: #5f6368; margin-left: 15px; }
 
         /* Code Blocks */
-        pre { background: #1e1e1e; color: #d4d4d4; padding: 1.5rem; border-radius: 12px; margin: 1rem 0; overflow-x: auto; position: relative; border: 1px solid #333; }
-        .copy-btn { position: absolute; top: 10px; right: 10px; background: #333; color: #ccc; border: 1px solid #444; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 1.2rem; border-radius: 12px; margin: 10px 0; position: relative; border: 1px solid #333; }
+        .copy-btn { position: absolute; top: 8px; right: 8px; background: #333; color: #ccc; border: 1px solid #444; padding: 3px 8px; border-radius: 5px; font-size: 10px; cursor: pointer; }
 
         .input-pill { background: #f0f4f9; border-radius: 28px; padding: 0.75rem 1.25rem; display: flex; align-items: flex-end; }
         .dark .input-pill { background: #1e1f20; }
         
         #auth-overlay { position: fixed; inset: 0; z-index: 200; background: white; display: flex; align-items: center; justify-content: center; }
         .dark #auth-overlay { background: #131314; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body class="flex h-full text-slate-900 dark:text-slate-100">
 
     <div id="auth-overlay">
         <div class="max-w-sm w-full p-8 text-center">
-            <img src="logo.png" class="w-16 h-16 mx-auto mb-6">
-            <h1 id="auth-title" class="text-3xl font-bold mb-2">RiteGPT</h1>
-            <p id="auth-subtitle" class="text-slate-500 mb-8 text-sm">Sign in to start your session.</p>
+            <img src="logo.png" class="w-20 h-20 mx-auto mb-4">
+            <h1 id="auth-title" class="text-4xl brand-text mb-2">RiteGPT</h1>
+            <p id="auth-subtitle" class="text-slate-500 mb-8 text-sm font-medium">Intelligence at your fingertips.</p>
             <form id="auth-form" class="space-y-4">
-                <input type="email" id="email" placeholder="Email" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:border-blue-500 transition-all">
-                <input type="password" id="password" placeholder="Password" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:border-blue-500 transition-all">
-                <button type="submit" id="auth-submit" class="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all">Sign In</button>
+                <input type="email" id="email" placeholder="Email" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:ring-2 ring-blue-500/20 transition-all">
+                <input type="password" id="password" placeholder="Password" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:ring-2 ring-blue-500/20 transition-all">
+                <button type="submit" id="auth-submit" class="w-full py-4 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold rounded-2xl shadow-xl active:scale-95 transition-all">Sign In</button>
             </form>
             <div class="mt-6 text-sm">
-                <span id="toggle-text" class="text-slate-500">New?</span>
-                <button id="toggle-auth" class="text-blue-600 font-bold ml-1 hover:underline">Create account</button>
+                <span id="toggle-text" class="text-slate-500">Need an account?</span>
+                <button id="toggle-auth" class="text-blue-600 font-bold ml-1">Sign Up</button>
             </div>
         </div>
     </div>
 
     <aside id="sidebar" class="w-64 bg-[#f0f4f9] dark:bg-[#1e1f20] hidden md:flex flex-col border-r border-transparent">
         <div class="p-6">
-            <button onclick="newChat()" class="w-full flex items-center gap-3 px-4 py-3 bg-white/60 dark:bg-white/5 rounded-full text-sm font-medium hover:bg-white transition-all shadow-sm">
-                <i class="fa-solid fa-plus"></i> New Chat
+            <button onclick="newChat()" class="w-full flex items-center gap-3 px-4 py-3 bg-white dark:bg-white/5 rounded-full text-sm font-semibold shadow-sm">
+                <i class="fa-solid fa-plus text-blue-500"></i> New Conversation
             </button>
         </div>
         <div class="flex-1"></div>
         <div class="p-4 border-t dark:border-zinc-800">
             <div id="admin-gate" class="hidden">
-                <button onclick="document.getElementById('set-modal').classList.remove('hidden')" class="w-full text-left p-3 text-[10px] font-black uppercase tracking-widest text-blue-500">
-                    <i class="fa-solid fa-gear mr-2"></i> Admin Settings
+                <button onclick="document.getElementById('set-modal').classList.remove('hidden')" class="w-full text-left p-3 text-[10px] font-black uppercase tracking-widest text-purple-500">
+                    <i class="fa-solid fa-screwdriver-wrench mr-2"></i> Admin Panel
                 </button>
             </div>
-            <button onclick="signOut()" class="w-full text-left p-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500">
-                <i class="fa-solid fa-arrow-right-from-bracket mr-2"></i> Log Out
+            <button onclick="signOut()" class="w-full text-left p-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors">
+                <i class="fa-solid fa-power-off mr-2"></i> Log Out
             </button>
         </div>
     </aside>
@@ -110,14 +103,15 @@
     <main class="flex-1 flex flex-col h-full relative">
         <header class="h-16 flex items-center justify-between px-6 z-10">
             <button class="md:hidden" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-            <span class="text-xl font-medium tracking-tight">RiteGPT</span>
+            <span class="text-xl font-bold brand-text">RiteGPT</span>
             <div class="w-8"></div>
         </header>
 
         <div id="messages-container" class="flex-1 overflow-y-auto px-6">
-            <div class="max-w-4xl mx-auto py-10 relative">
+            <div class="max-w-4xl mx-auto py-10">
                 <div id="chat-start" class="text-center py-20">
-                    <h2 class="text-4xl font-medium text-slate-200 dark:text-zinc-800">How can I help today?</h2>
+                    <h2 class="text-4xl font-bold text-slate-200 dark:text-zinc-800">RiteGPT</h2>
+                    <p class="text-slate-400 mt-2">How can I assist you today?</p>
                 </div>
                 <div id="chat-flow"></div>
                 <div id="anchor"></div>
@@ -126,24 +120,24 @@
 
         <div class="p-4 md:pb-8 z-10">
             <div class="max-w-3xl mx-auto">
-                <div class="input-pill shadow-sm">
-                    <textarea id="chat-input" rows="1" placeholder="Enter a prompt here" class="flex-1 bg-transparent p-2 outline-none resize-none text-base max-h-40"></textarea>
-                    <button id="send-btn" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors">
+                <div class="input-pill shadow-sm border border-slate-200 dark:border-zinc-800">
+                    <textarea id="chat-input" rows="1" placeholder="Type your message..." class="flex-1 bg-transparent p-2 outline-none resize-none text-base max-h-40"></textarea>
+                    <button id="send-btn" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600">
                         <i class="fa-solid fa-paper-plane text-xl"></i>
                     </button>
                 </div>
                 <div class="flex justify-between items-center mt-3 px-2">
-                    <p class="text-[10px] text-slate-400 font-medium tracking-wide">Powered by RiteGPT</p>
-                    <p id="model-tag" class="text-[10px] text-slate-300 font-bold uppercase tracking-widest"></p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Powered by RiteGPT</p>
+                    <p id="model-tag" class="text-[10px] text-slate-300 font-bold uppercase"></p>
                 </div>
             </div>
         </div>
     </main>
 
     <div id="set-modal" class="fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-zinc-900 w-full max-w-sm p-8 rounded-3xl">
+        <div class="bg-white dark:bg-zinc-900 w-full max-w-sm p-8 rounded-3xl shadow-2xl">
             <h3 class="text-xl font-bold mb-6">System Config</h3>
-            <input type="password" id="api-in" placeholder="OpenRouter API Key" class="w-full p-4 rounded-xl border mb-4 dark:bg-zinc-800 outline-none">
+            <input type="password" id="api-in" placeholder="API Key" class="w-full p-4 rounded-xl border mb-4 dark:bg-zinc-800 outline-none">
             <input type="text" id="model-in" placeholder="Model ID" class="w-full p-4 rounded-xl border mb-6 dark:bg-zinc-800 outline-none">
             <div class="flex gap-3">
                 <button onclick="saveSet()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-bold">Save</button>
@@ -162,25 +156,24 @@
 
         document.getElementById('toggle-auth').onclick = () => {
             isSignUp = !isSignUp;
-            document.getElementById('auth-title').innerText = isSignUp ? "Create Account" : "RiteGPT";
+            document.getElementById('auth-title').innerText = isSignUp ? "Join RiteGPT" : "RiteGPT";
             document.getElementById('auth-submit').innerText = isSignUp ? "Sign Up" : "Sign In";
-            document.getElementById('toggle-auth').innerText = isSignUp ? "Sign In" : "Create account";
+            document.getElementById('toggle-auth').innerText = isSignUp ? "Sign In" : "Sign Up";
         };
 
         document.getElementById('auth-form').onsubmit = async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim().toLowerCase();
             const password = document.getElementById('password').value;
 
             if (isSignUp) {
                 const { error } = await _supabase.auth.signUp({ email, password });
-                if (error) alert(error.message);
-                else alert("Account created! You can now Sign In.");
+                if (error) alert(error.message); else alert("Account created! Now Sign In.");
             } else {
                 const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
                 if (error) alert(error.message);
                 else {
-                    if (email.includes('admin@ritegpt')) document.getElementById('admin-gate').classList.remove('hidden');
+                    checkAdmin(email);
                     document.getElementById('auth-overlay').style.display = 'none';
                     await loadCloud();
                     await loadHistory();
@@ -188,14 +181,18 @@
             }
         };
 
+        function checkAdmin(email) {
+            if (email === "admin@ritegpt.pro" || email === "admin@ritegpt.com") {
+                document.getElementById('admin-gate').classList.remove('hidden');
+            }
+        }
+
         async function loadCloud() {
             const { data } = await _supabase.from('config').select('*').eq('key_name', 'admin_settings').single();
             if (data) { system.key = data.api_key; system.model = data.model_name; document.getElementById('model-tag').innerText = system.model; }
         }
 
         async function loadHistory() {
-            const { data: { user } } = await _supabase.auth.getUser();
-            if (!user) return;
             const { data } = await _supabase.from('messages').select('*').order('created_at', { ascending: true });
             if (data && data.length > 0) {
                 document.getElementById('chat-start').style.display = 'none';
@@ -220,12 +217,8 @@
             const doc = new DOMParser().parseFromString(html, 'text/html');
             doc.querySelectorAll('pre').forEach(pre => {
                 const btn = document.createElement('button');
-                btn.className = 'copy-btn';
-                btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
-                btn.onclick = () => {
-                    navigator.clipboard.writeText(pre.innerText.replace('Copy', '').trim());
-                    btn.innerText = 'Copied!'; setTimeout(() => btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy', 2000);
-                };
+                btn.className = 'copy-btn'; btn.innerHTML = 'Copy';
+                btn.onclick = () => { navigator.clipboard.writeText(pre.innerText.replace('Copy', '').trim()); btn.innerText = 'Copied!'; setTimeout(() => btn.innerHTML = 'Copy', 2000); };
                 pre.appendChild(btn);
             });
             return DOMPurify.sanitize(doc.body.innerHTML);
@@ -238,7 +231,7 @@
             document.getElementById('chat-start').style.display = 'none';
 
             appendMsg('user', prompt, true); 
-            const aiBox = appendMsg('ai', '<i class="fa-solid fa-circle-notch fa-spin text-blue-400"></i>...', false);
+            const aiBox = appendMsg('ai', '<i class="fa-solid fa-circle-notch fa-spin text-blue-400"></i> Thinking...', false);
 
             try {
                 const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -258,14 +251,13 @@
             div.className = `message-row row-${role}`;
             div.innerHTML = `
                 <div class="message-wrapper">
-                    <div class="avatar ${role === 'user' ? 'user-avatar' : 'ai-avatar'}">${role === 'user' ? 'U' : 'RG'}</div>
+                    <div class="avatar ${role === 'user' ? 'user-avatar' : 'ai-avatar'}">${role === 'user' ? 'U' : 'RiteGPT'}</div>
                     <div class="content">${role === 'ai' ? renderMarkdown(content) : content}</div>
                 </div>
             `;
             document.getElementById('chat-flow').appendChild(div);
             if(shouldSave) saveToCloud(role, content);
-            const container = document.getElementById('messages-container');
-            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            document.getElementById('messages-container').scrollTo({ top: document.getElementById('messages-container').scrollHeight, behavior: 'smooth' });
             return div.querySelector('.content');
         }
 
