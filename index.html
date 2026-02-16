@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RiteGPT | Universal AI</title>
+    <title>RiteGPT | AI Intelligence</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -29,18 +29,18 @@
     </script>
 
     <style>
-        /* Mobile Layout Stability */
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
+        /* Mobile Layout & Keyboard Handling */
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; }
         
-        /* The Logo Watermark */
+        /* Subtle Watermark Branding */
         #chat-container::before {
             content: "";
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 350px;
-            height: 350px;
+            width: 320px;
+            height: 320px;
             background-image: url('https://i.postimg.cc/mD8mLRm2/rite-gpt.png');
             background-repeat: no-repeat;
             background-position: center;
@@ -51,22 +51,23 @@
         }
         .dark #chat-container::before { opacity: 0.08; filter: grayscale(1) invert(1); }
 
-        /* RiteGPT Branding Colors */
+        /* RiteGPT Logo Font Style */
         .brand-text {
             background: linear-gradient(to right, #9333ea, #db2777);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: 800;
+            letter-spacing: -0.025em;
         }
 
-        /* Markdown Styles */
+        /* Markdown UI */
         .markdown-body pre { background: #1e1e1e; color: #d4d4d4; padding: 1.25rem; border-radius: 0.75rem; overflow-x: auto; margin: 1rem 0; border: 1px solid #334155; }
-        .markdown-body code { font-family: 'Fira Code', monospace; background: rgba(147, 51, 234, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.85em; }
+        .markdown-body code { font-family: 'monospace'; background: rgba(147, 51, 234, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.85em; }
         .markdown-body p { margin-bottom: 1rem; line-height: 1.7; }
         
-        /* Custom Scrollbar */
+        /* Scrollbars */
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
 
         /* Loader */
@@ -80,35 +81,35 @@
 <body class="bg-white dark:bg-rite-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
 
     <div id="loading">
-        <div class="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="mt-4 brand-text text-xl tracking-widest">RiteGPT</p>
+        <div class="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 brand-text text-xl">RiteGPT</p>
     </div>
 
     <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-50 dark:bg-rite-dark p-4 hidden">
         <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 border border-slate-200 dark:border-slate-700">
             <div class="text-center mb-8">
-                <img src="https://i.postimg.cc/mD8mLRm2/rite-gpt.png" class="w-16 mx-auto mb-4" alt="Logo">
+                <img src="https://i.postimg.cc/mD8mLRm2/rite-gpt.png" class="w-16 mx-auto mb-4" alt="RiteGPT Logo">
                 <h1 class="text-2xl font-bold brand-text">RiteGPT</h1>
-                <p id="auth-title" class="text-slate-500 text-sm mt-1 font-medium">Secure Access Portal</p>
+                <p id="auth-title" class="text-slate-500 text-sm mt-1">Sign in to continue</p>
             </div>
 
             <form id="auth-form" onsubmit="auth.handleSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Email</label>
-                    <input type="email" id="auth-email" required placeholder="name@example.com" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none transition-all">
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Email Address</label>
+                    <input type="email" id="auth-email" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none transition-all">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Password</label>
-                    <input type="password" id="auth-pass" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none transition-all">
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Password</label>
+                    <input type="password" id="auth-pass" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none transition-all">
                 </div>
                 <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-purple-500/30">Sign In</button>
             </form>
             
             <div class="mt-6 flex flex-col items-center gap-3 text-sm">
-                <button onclick="auth.toggleMode()" id="toggle-auth" class="text-purple-600 font-bold">Need an account? Sign Up</button>
-                <button onclick="auth.forgotPassword()" class="text-slate-400 italic">Forgot password?</button>
+                <button onclick="auth.toggleMode()" id="toggle-auth" class="text-purple-600 font-bold hover:underline">Create an account</button>
+                <button onclick="auth.forgotPassword()" class="text-slate-400">Forgot password?</button>
                 <div class="w-full h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
-                <button onclick="auth.loginGuest()" class="text-slate-700 dark:text-slate-300 font-extrabold hover:text-purple-600 transition-colors">Continue as Guest</button>
+                <button onclick="auth.loginGuest()" class="text-slate-600 dark:text-slate-300 font-bold hover:text-purple-600">Enter as Guest</button>
             </div>
         </div>
     </div>
@@ -121,36 +122,36 @@
                     <img src="https://i.postimg.cc/mD8mLRm2/rite-gpt.png" class="w-8" alt="Logo">
                     <span class="brand-text text-lg">RiteGPT</span>
                 </div>
-                <button onclick="ui.toggleSidebar()" class="md:hidden p-2 text-slate-500"><i class="ph ph-x text-xl"></i></button>
+                <button onclick="ui.toggleSidebar()" class="md:hidden p-2"><i class="ph ph-x text-xl"></i></button>
             </div>
 
             <div class="p-4">
-                <button onclick="app.newChat()" class="w-full flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:shadow-md transition-all text-sm font-bold">
+                <button onclick="app.newChat()" class="w-full flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm font-bold shadow-sm">
                     <i class="ph ph-plus-circle text-purple-600 text-xl"></i>
-                    New Conversation
+                    New Chat
                 </button>
             </div>
 
             <div id="chat-list" class="flex-1 overflow-y-auto custom-scrollbar px-3 space-y-1"></div>
 
             <div class="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                <div id="admin-indicator" class="hidden px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-black rounded-full uppercase tracking-widest w-full text-center mb-2">Administrator Mode</div>
+                <div id="admin-badge" class="hidden px-3 py-1 bg-purple-600 text-white text-[9px] font-black rounded-full uppercase tracking-widest w-full text-center mb-2">Admin Authorized</div>
                 
                 <div class="flex items-center gap-3 px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2">
                     <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold" id="user-initial">?</div>
-                    <div class="flex-1 truncate text-[11px] font-bold text-slate-500" id="user-display">User</div>
+                    <div class="flex-1 truncate text-[11px] font-bold" id="user-display">User</div>
                 </div>
 
                 <button onclick="app.openSettings()" id="settings-btn" class="hidden flex items-center gap-3 w-full px-3 py-2 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all">
-                    <i class="ph ph-gear-six text-lg"></i> API Settings
+                    <i class="ph ph-gear-six text-lg"></i> Global Config
                 </button>
                 <button onclick="ui.toggleTheme()" class="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all">
                     <i class="ph ph-moon text-lg dark:hidden"></i>
                     <i class="ph ph-sun text-lg hidden dark:block"></i>
-                    Switch Theme
+                    Appearance
                 </button>
-                <button onclick="auth.logout()" class="flex items-center gap-3 w-full px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all">
-                    <i class="ph ph-sign-out text-lg"></i> Log Out
+                <button onclick="auth.logout()" class="flex items-center gap-3 w-full px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all">
+                    <i class="ph ph-sign-out text-lg"></i> Logout
                 </button>
             </div>
         </aside>
@@ -158,7 +159,7 @@
         <main class="flex-1 flex flex-col relative min-w-0 bg-white dark:bg-rite-dark">
             <header class="flex items-center justify-between p-4 md:px-8 bg-white/80 dark:bg-rite-dark/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-100 dark:border-slate-800">
                 <button onclick="ui.toggleSidebar()" class="md:hidden p-2"><i class="ph ph-list text-2xl"></i></button>
-                <span id="chat-title-display" class="font-bold text-slate-400 text-xs uppercase tracking-widest truncate max-w-xs">New Chat</span>
+                <span id="chat-title-display" class="font-bold text-slate-400 text-[10px] uppercase tracking-widest truncate">Conversations</span>
                 <div class="w-8"></div>
             </header>
 
@@ -167,12 +168,12 @@
                     </div>
             </div>
 
-            <div class="absolute bottom-0 left-0 right-0 p-4 md:p-8 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-rite-dark dark:via-rite-dark/90">
+            <div class="absolute bottom-0 left-0 right-0 p-4 md:p-8 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-rite-dark dark:via-rite-dark/95">
                 <div class="max-w-3xl mx-auto relative">
-                    <div id="input-container" class="flex items-end gap-2 p-2 bg-slate-100 dark:bg-slate-800/50 backdrop-blur rounded-3xl border-2 border-transparent focus-within:border-purple-500/50 transition-all shadow-2xl">
-                        <textarea id="user-input" rows="1" placeholder="Type a message to RiteGPT..." 
-                            class="flex-1 bg-transparent border-none focus:ring-0 px-4 py-3 resize-none max-h-40 custom-scrollbar text-sm md:text-base"></textarea>
-                        <button id="send-btn" onclick="app.send()" class="p-3 bg-purple-600 text-white rounded-2xl hover:bg-purple-700 transition-all disabled:opacity-30">
+                    <div class="flex items-end gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-3xl border-2 border-transparent focus-within:border-purple-500 transition-all shadow-2xl">
+                        <textarea id="user-input" rows="1" placeholder="How can RiteGPT help?" 
+                            class="flex-1 bg-transparent border-none focus:ring-0 px-4 py-3 resize-none max-h-40 text-sm md:text-base"></textarea>
+                        <button id="send-btn" onclick="app.send()" class="p-3 bg-purple-600 text-white rounded-2xl hover:bg-purple-700 transition-all disabled:opacity-20">
                             <i class="ph ph-paper-plane-right-fill text-xl"></i>
                         </button>
                     </div>
@@ -182,45 +183,45 @@
     </div>
 
     <div id="settings-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden p-4">
-        <div class="w-full max-w-lg bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-2xl scale-95 transition-transform">
-            <h2 class="text-xl font-black mb-6 flex items-center gap-2"><i class="ph ph-key-return text-purple-600"></i> Global API Configuration</h2>
+        <div class="w-full max-w-lg bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-2xl">
+            <h2 class="text-xl font-black mb-6 flex items-center gap-2"><i class="ph ph-lock-key text-purple-600"></i> Admin Panel</h2>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">OpenRouter Key</label>
-                    <input type="password" id="admin-key-input" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none">
+                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">OpenRouter API Key</label>
+                    <input type="password" id="admin-key-input" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none outline-none focus:ring-2 focus:ring-purple-500">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">AI Model Path</label>
-                    <input type="text" id="admin-model-input" placeholder="deepseek/deepseek-r1:free" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none">
+                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Model ID</label>
+                    <input type="text" id="admin-model-input" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none outline-none focus:ring-2 focus:ring-purple-500">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Global System Personality</label>
-                    <textarea id="admin-prompt-input" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none resize-none"></textarea>
+                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">System Instructions</label>
+                    <textarea id="admin-prompt-input" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none outline-none focus:ring-2 focus:ring-purple-500 resize-none"></textarea>
                 </div>
             </div>
             <div class="mt-8 flex gap-3">
                 <button onclick="app.closeSettings()" class="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl">Cancel</button>
-                <button onclick="app.saveSettings()" class="flex-1 py-3 text-sm font-bold bg-purple-600 text-white rounded-xl shadow-lg">Apply to All Users</button>
+                <button onclick="app.saveSettings()" class="flex-1 py-3 text-sm font-bold bg-purple-600 text-white rounded-xl shadow-lg">Save Changes</button>
             </div>
         </div>
     </div>
 
     <script>
-        /** * RiteGPT Core Engine
-         * Password: Kani@2211$
+        /** RiteGPT v2.1
+         * Fixed Admin Auth Logic
          */
 
         const ADMIN_EMAIL = "admin@ritegpt.pro";
         const ADMIN_PASS = "Kani@2211$";
-        const STORE_KEY = "ritegpt_global_v2";
-        const USER_DB_KEY = "ritegpt_user_accounts";
+        const STORE_KEY = "ritegpt_shared_config";
+        const USER_DB_KEY = "ritegpt_user_db";
 
         const auth = {
             mode: 'login',
             currentUser: null,
 
             init() {
-                const session = sessionStorage.getItem('rite_session_v2');
+                const session = sessionStorage.getItem('rite_session');
                 if (session) {
                     this.currentUser = JSON.parse(session);
                     app.init();
@@ -232,23 +233,23 @@
 
             handleSubmit(e) {
                 e.preventDefault();
-                const email = document.getElementById('auth-email').value.toLowerCase();
-                const pass = document.getElementById('auth-pass').value;
+                const email = document.getElementById('auth-email').value.trim().toLowerCase();
+                const pass = document.getElementById('auth-pass').value.trim();
                 const users = JSON.parse(localStorage.getItem(USER_DB_KEY) || '[]');
 
+                // PRIMARY ADMIN CHECK
+                if (email === ADMIN_EMAIL.toLowerCase() && pass === ADMIN_PASS) {
+                    this.login({ email: ADMIN_EMAIL, role: 'admin' });
+                    return;
+                }
+
                 if (this.mode === 'login') {
-                    // Check Admin
-                    if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
-                        this.login({ email, role: 'admin' });
-                    } else {
-                        const user = users.find(u => u.email === email && u.pass === pass);
-                        if (user) this.login(user);
-                        else alert("Access Denied: Invalid Credentials");
-                    }
+                    const user = users.find(u => u.email === email && u.pass === pass);
+                    if (user) this.login(user);
+                    else alert("Error: Incorrect login details.");
                 } else {
-                    if (email === ADMIN_EMAIL) return alert("Unauthorized email identifier.");
-                    if (users.find(u => u.email === email)) return alert("Account already exists.");
-                    
+                    if (email === ADMIN_EMAIL.toLowerCase()) return alert("Restricted identifier.");
+                    if (users.find(u => u.email === email)) return alert("Account exists.");
                     const newUser = { email, pass, role: 'user' };
                     users.push(newUser);
                     localStorage.setItem(USER_DB_KEY, JSON.stringify(users));
@@ -258,7 +259,7 @@
 
             login(user) {
                 this.currentUser = user;
-                sessionStorage.setItem('rite_session_v2', JSON.stringify(user));
+                sessionStorage.setItem('rite_session', JSON.stringify(user));
                 document.getElementById('auth-screen').classList.add('hidden');
                 app.init();
             },
@@ -268,18 +269,18 @@
             },
 
             logout() {
-                sessionStorage.removeItem('rite_session_v2');
+                sessionStorage.removeItem('rite_session');
                 location.reload();
             },
 
             toggleMode() {
                 this.mode = this.mode === 'login' ? 'register' : 'login';
-                document.getElementById('auth-title').innerText = this.mode === 'login' ? 'Secure Access Portal' : 'Register New Account';
-                document.getElementById('toggle-auth').innerText = this.mode === 'login' ? 'Need an account? Sign Up' : 'Already have an account? Sign In';
+                document.getElementById('auth-title').innerText = this.mode === 'login' ? 'Sign in to continue' : 'Create an account';
+                document.getElementById('toggle-auth').innerText = this.mode === 'login' ? 'Create an account' : 'Already have an account?';
             },
 
             forgotPassword() {
-                alert("Password recovery is managed by your organization's admin.");
+                alert("Please contact the administrator at " + ADMIN_EMAIL);
             }
         };
 
@@ -294,11 +295,9 @@
             isGenerating: false,
 
             init() {
-                // Load shared API config
                 const savedConfig = localStorage.getItem(STORE_KEY);
                 if (savedConfig) this.config = JSON.parse(savedConfig);
 
-                // Load private chats
                 if (auth.currentUser.role !== 'guest') {
                     this.chats = JSON.parse(localStorage.getItem(`chats_${auth.currentUser.email}`) || '[]');
                 }
@@ -310,13 +309,12 @@
                 
                 if (auth.currentUser.role === 'admin') {
                     document.getElementById('settings-btn').classList.remove('hidden');
-                    document.getElementById('admin-indicator').classList.remove('hidden');
+                    document.getElementById('admin-badge').classList.remove('hidden');
                 }
 
                 this.renderChatList();
                 this.newChat();
 
-                // Input handling
                 const tx = document.getElementById('user-input');
                 tx.addEventListener("input", function() {
                     this.style.height = "auto";
@@ -327,7 +325,7 @@
             newChat() {
                 this.currentChatId = Date.now();
                 this.renderMessages([]);
-                document.getElementById('chat-title-display').innerText = "New Conversation";
+                document.getElementById('chat-title-display').innerText = "New Chat";
             },
 
             renderChatList() {
@@ -369,7 +367,7 @@
                 if (msgs.length === 0) {
                     container.innerHTML = `
                         <div class="flex flex-col items-center justify-center py-24 text-center">
-                            <img src="https://i.postimg.cc/mD8mLRm2/rite-gpt.png" class="w-24 opacity-10 mb-8 grayscale" alt="Watermark">
+                            <img src="https://i.postimg.cc/mD8mLRm2/rite-gpt.png" class="w-24 opacity-10 mb-8 grayscale" alt="Logo">
                             <h2 class="text-3xl font-black text-slate-100 dark:text-slate-800/50">RITE GPT</h2>
                         </div>
                     `;
@@ -391,7 +389,7 @@
                     : `<div class="w-full">
                         <div class="flex items-center gap-2 mb-3">
                              <img src="https://i.postimg.cc/mD8mLRm2/rite-gpt.png" class="w-5" alt="Logo">
-                             <span class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-600">RiteGPT AI</span>
+                             <span class="text-[10px] font-black uppercase tracking-widest text-purple-600">RiteGPT AI</span>
                         </div>
                         <div class="markdown-body text-slate-700 dark:text-slate-300 text-sm md:text-base leading-relaxed pl-7">${DOMPurify.sanitize(marked.parse(content))}</div>
                        </div>`;
@@ -407,7 +405,7 @@
                 const content = input.value.trim();
                 if (!content || this.isGenerating) return;
                 
-                if (!this.config.apiKey) return alert("System Offline: API configuration missing. Contact Administrator.");
+                if (!this.config.apiKey) return alert("System configuration pending. Contact admin.");
 
                 this.isGenerating = true;
                 input.value = '';
@@ -427,8 +425,7 @@
                         method: "POST",
                         headers: {
                             "Authorization": `Bearer ${this.config.apiKey}`,
-                            "Content-Type": "application/json",
-                            "X-Title": "RiteGPT Pro"
+                            "Content-Type": "application/json"
                         },
                         body: JSON.stringify({
                             model: this.config.model,
@@ -459,12 +456,12 @@
                     
                     aiTarget.innerHTML = DOMPurify.sanitize(marked.parse(fullText));
                     chat.messages.push({ role: 'assistant', content: fullText });
-                    if (chat.title === 'New Conversation') chat.title = content.substring(0, 35);
+                    if (chat.title === 'New Chat') chat.title = content.substring(0, 30);
                     this.saveToDisk();
                     this.renderChatList();
 
                 } catch (err) {
-                    aiTarget.innerHTML = `<span class="text-red-500 font-bold">Network Exception: Unable to reach AI node.</span>`;
+                    aiTarget.innerHTML = `<span class="text-red-500 font-bold">Error: Connection failed.</span>`;
                 } finally {
                     this.isGenerating = false;
                     document.getElementById('send-btn').disabled = false;
@@ -474,7 +471,7 @@
             getOrCreateChat() {
                 let chat = this.chats.find(c => c.id === this.currentChatId);
                 if (!chat) {
-                    chat = { id: this.currentChatId, title: 'New Conversation', messages: [] };
+                    chat = { id: this.currentChatId, title: 'New Chat', messages: [] };
                     this.chats.push(chat);
                 }
                 return chat;
@@ -511,7 +508,7 @@
                 this.config.systemPrompt = document.getElementById('admin-prompt-input').value.trim();
                 localStorage.setItem(STORE_KEY, JSON.stringify(this.config));
                 this.closeSettings();
-                alert("Global Config Updated.");
+                alert("Settings Updated Globally.");
             }
         };
 
@@ -525,13 +522,11 @@
             }
         };
 
-        // Initialize
         window.onload = () => {
             if (localStorage.getItem('rite_theme') === 'dark') document.documentElement.classList.add('dark');
             auth.init();
         };
 
-        // Mobile Friendly Submit
         document.getElementById('user-input').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 768) {
                 e.preventDefault();
