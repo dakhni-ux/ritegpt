@@ -9,7 +9,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -19,14 +18,12 @@
         body { background-color: var(--chat-bg); font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
         
         /* Logo Watermark */
-        #messages-container { position: relative; }
         #messages-container::before {
             content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 250px; height: 250px; background: url('logo.png') no-repeat center;
             background-size: contain; opacity: 0.04; pointer-events: none; z-index: 0;
         }
 
-        /* Branding Gradient */
         .brand-text {
             background: linear-gradient(135deg, #4285f4, #9b72f3);
             -webkit-background-clip: text;
@@ -34,7 +31,6 @@
             font-weight: 800;
         }
 
-        /* Alignment Logic */
         .message-row { display: flex; width: 100%; margin-bottom: 2rem; position: relative; z-index: 1; animation: fadeIn 0.3s ease; }
         .row-user { justify-content: flex-end; }
         .row-user .message-wrapper { display: flex; flex-direction: row-reverse; max-width: 80%; }
@@ -50,11 +46,10 @@
         .ai-avatar { background: linear-gradient(135deg, #4285f4, #9b72f3); color: white; margin-right: 15px; }
         .user-avatar { background: #e8eaed; color: #5f6368; margin-left: 15px; }
 
-        /* Code Blocks */
         pre { background: #1e1e1e; color: #d4d4d4; padding: 1.2rem; border-radius: 12px; margin: 10px 0; position: relative; border: 1px solid #333; }
         .copy-btn { position: absolute; top: 8px; right: 8px; background: #333; color: #ccc; border: 1px solid #444; padding: 3px 8px; border-radius: 5px; font-size: 10px; cursor: pointer; }
 
-        .input-pill { background: #f0f4f9; border-radius: 28px; padding: 0.75rem 1.25rem; display: flex; align-items: flex-end; }
+        .input-pill { background: #f0f4f9; border-radius: 28px; padding: 0.75rem 1.25rem; display: flex; align-items: flex-end; border: 1px solid transparent; }
         .dark .input-pill { background: #1e1f20; }
         
         #auth-overlay { position: fixed; inset: 0; z-index: 200; background: white; display: flex; align-items: center; justify-content: center; }
@@ -70,8 +65,8 @@
             <h1 id="auth-title" class="text-4xl brand-text mb-2">RiteGPT</h1>
             <p id="auth-subtitle" class="text-slate-500 mb-8 text-sm font-medium">Intelligence at your fingertips.</p>
             <form id="auth-form" class="space-y-4">
-                <input type="email" id="email" placeholder="Email" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:ring-2 ring-blue-500/20 transition-all">
-                <input type="password" id="password" placeholder="Password" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:ring-2 ring-blue-500/20 transition-all">
+                <input type="email" id="email" placeholder="Email" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none">
+                <input type="password" id="password" placeholder="Password" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none">
                 <button type="submit" id="auth-submit" class="w-full py-4 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold rounded-2xl shadow-xl active:scale-95 transition-all">Sign In</button>
             </form>
             <div class="mt-6 text-sm">
@@ -87,10 +82,10 @@
                 <i class="fa-solid fa-plus text-blue-500"></i> New Conversation
             </button>
         </div>
-        <div class="flex-1"></div>
+        <div class="flex-1 overflow-y-auto px-4"></div>
         <div class="p-4 border-t dark:border-zinc-800">
             <div id="admin-gate" class="hidden">
-                <button onclick="document.getElementById('set-modal').classList.remove('hidden')" class="w-full text-left p-3 text-[10px] font-black uppercase tracking-widest text-purple-500">
+                <button onclick="document.getElementById('set-modal').classList.remove('hidden')" class="w-full text-left p-3 text-[10px] font-black uppercase tracking-widest text-blue-500">
                     <i class="fa-solid fa-screwdriver-wrench mr-2"></i> Admin Panel
                 </button>
             </div>
@@ -154,6 +149,35 @@
         let isSignUp = false;
         let system = { key: "", model: "" };
 
+        // --- SESSION MONITOR ---
+        async function initAuth() {
+            // Check current session
+            const { data: { session } } = await _supabase.auth.getSession();
+            handleUser(session?.user);
+
+            // Listen for changes
+            _supabase.auth.onAuthStateChange((event, session) => {
+                handleUser(session?.user);
+            });
+        }
+
+        async function handleUser(user) {
+            if (user) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                // Check Admin Access
+                if (user.email === "admin@ritegpt.pro" || user.email === "admin@ritegpt.com") {
+                    document.getElementById('admin-gate').classList.remove('hidden');
+                }
+                await loadCloud();
+                await loadHistory();
+            } else {
+                document.getElementById('auth-overlay').style.display = 'flex';
+                document.getElementById('admin-gate').classList.add('hidden');
+            }
+        }
+
+        initAuth();
+
         document.getElementById('toggle-auth').onclick = () => {
             isSignUp = !isSignUp;
             document.getElementById('auth-title').innerText = isSignUp ? "Join RiteGPT" : "RiteGPT";
@@ -170,22 +194,10 @@
                 const { error } = await _supabase.auth.signUp({ email, password });
                 if (error) alert(error.message); else alert("Account created! Now Sign In.");
             } else {
-                const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+                const { error } = await _supabase.auth.signInWithPassword({ email, password });
                 if (error) alert(error.message);
-                else {
-                    checkAdmin(email);
-                    document.getElementById('auth-overlay').style.display = 'none';
-                    await loadCloud();
-                    await loadHistory();
-                }
             }
         };
-
-        function checkAdmin(email) {
-            if (email === "admin@ritegpt.pro" || email === "admin@ritegpt.com") {
-                document.getElementById('admin-gate').classList.remove('hidden');
-            }
-        }
 
         async function loadCloud() {
             const { data } = await _supabase.from('config').select('*').eq('key_name', 'admin_settings').single();
@@ -194,6 +206,7 @@
 
         async function loadHistory() {
             const { data } = await _supabase.from('messages').select('*').order('created_at', { ascending: true });
+            document.getElementById('chat-flow').innerHTML = ''; // Clear and reload to prevent double bubbles
             if (data && data.length > 0) {
                 document.getElementById('chat-start').style.display = 'none';
                 data.forEach(msg => appendMsg(msg.role, msg.content, false));
@@ -209,6 +222,7 @@
             const k = document.getElementById('api-in').value;
             const m = document.getElementById('model-in').value;
             await _supabase.from('config').upsert({ key_name: 'admin_settings', api_key: k, model_name: m });
+            alert("Settings updated!");
             location.reload();
         }
 
@@ -261,7 +275,7 @@
             return div.querySelector('.content');
         }
 
-        function signOut() { _supabase.auth.signOut(); location.reload(); }
+        async function signOut() { await _supabase.auth.signOut(); }
         function newChat() { document.getElementById('chat-flow').innerHTML = ''; document.getElementById('chat-start').style.display = 'block'; }
         document.getElementById('send-btn').onclick = runAI;
         document.getElementById('chat-input').onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runAI(); } };
