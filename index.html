@@ -8,63 +8,94 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // Theme Logic
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <style>
-        body { background-color: #131314; color: #e3e3e3; font-family: 'Inter', sans-serif; }
         .brand-text { background: linear-gradient(135deg, #4285f4, #9b72f3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
+        
+        /* Dark Mode Colors */
+        .dark body { background-color: #131314; color: #e3e3e3; }
+        .dark .sidebar { background-color: #1e1f20; border-color: #333; }
+        .dark .chat-bubble.user { background: #2f2f2f; color: white; }
+        
+        /* Light Mode Colors */
+        body { background-color: #ffffff; color: #1f1f1f; transition: background 0.3s; }
+        .sidebar { background-color: #f0f4f9; border-color: #e5e7eb; }
         .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 20px; margin-bottom: 12px; }
-        .user-bubble { background: #2f2f2f; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .ai-bubble { background: transparent; align-self: flex-start; }
-        .model-pill { padding: 6px 12px; border-radius: 20px; border: 1px solid #3c4043; font-size: 11px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
-        .model-pill.active { background: white; color: black; border-color: white; font-weight: bold; }
-        #auth-overlay { position: fixed; inset: 0; background: #131314; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        .chat-bubble.user { background: #f0f4f9; align-self: flex-end; border-bottom-right-radius: 4px; color: #1f1f1f; }
+        .chat-bubble.ai { background: transparent; align-self: flex-start; }
+
+        .model-pill { padding: 6px 12px; border-radius: 20px; border: 1px solid #ccc; font-size: 11px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .dark .model-pill { border-color: #3c4043; color: #9aa0a6; }
+        .model-pill.active { background: #4285f4; color: white; border-color: #4285f4; font-weight: bold; }
+        
+        #auth-overlay { position: fixed; inset: 0; background: inherit; z-index: 100; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body class="flex h-full overflow-hidden">
 
     <div id="auth-overlay">
-        <div class="w-full max-w-sm p-8 text-center">
+        <div class="w-full max-w-sm p-8 text-center bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl">
             <h1 class="text-4xl brand-text mb-8">RiteGPT</h1>
-            <form id="auth-form" class="space-y-4">
-                <input type="email" id="auth-email" placeholder="Email" required class="w-full p-4 rounded-2xl bg-zinc-800 border-none outline-none text-white">
-                <input type="password" id="auth-pass" placeholder="Password" required class="w-full p-4 rounded-2xl bg-zinc-800 border-none outline-none text-white">
-                <button type="submit" id="auth-btn" class="w-full py-4 bg-white text-black font-bold rounded-2xl hover:bg-zinc-200 transition-colors">Sign In</button>
+            <form id="auth-form" class="space-y-4 text-left">
+                <input type="email" id="auth-email" placeholder="Email" required class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none">
+                <input type="password" id="auth-pass" placeholder="Password" required class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none">
+                <button type="submit" id="auth-btn" class="w-full py-4 bg-zinc-900 dark:bg-zinc-100 dark:text-black text-white font-bold rounded-2xl">Sign In</button>
             </form>
-            <p class="mt-6 text-sm text-zinc-500">New here? <button onclick="toggleAuthMode()" class="text-blue-500 font-bold" id="auth-toggle-text">Create Account</button></p>
+            <p class="mt-6 text-sm">New? <button onclick="toggleAuthMode()" class="text-blue-500 font-bold" id="auth-toggle-text">Create Account</button></p>
         </div>
     </div>
 
-    <aside class="w-64 bg-[#1e1f20] flex flex-col border-r border-zinc-800 hidden md:flex">
-        <div class="p-4"><button onclick="location.reload()" class="w-full py-3 bg-zinc-800 rounded-xl text-sm font-bold hover:bg-zinc-700">+ New Chat</button></div>
-        <div id="history-list" class="flex-1 overflow-y-auto px-3 space-y-1 text-zinc-400 text-xs"></div>
-        <div class="p-4 border-t border-zinc-800 space-y-2">
-            <button id="admin-panel-btn" onclick="document.getElementById('admin-modal').classList.remove('hidden')" class="hidden w-full text-left p-2 text-[10px] text-purple-400 font-bold uppercase hover:bg-zinc-800 rounded"><i class="fa-solid fa-crown mr-2"></i> Admin settings</button>
-            <button onclick="signOut()" class="w-full text-left p-2 text-[10px] text-zinc-500 font-bold uppercase hover:text-red-400"><i class="fa-solid fa-power-off mr-2"></i> Logout</button>
+    <aside class="sidebar w-64 flex flex-col border-r hidden md:flex">
+        <div class="p-4"><button onclick="location.reload()" class="w-full py-3 bg-white dark:bg-zinc-800 rounded-xl text-sm font-bold shadow-sm">+ New Chat</button></div>
+        <div id="history-list" class="flex-1 overflow-y-auto px-3 space-y-1 text-xs opacity-70"></div>
+        
+        <div class="p-4 border-t dark:border-zinc-800 space-y-2">
+            <button onclick="toggleTheme()" class="w-full text-left p-2 text-[10px] font-bold uppercase hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded">
+                <i class="fa-solid fa-circle-half-stroke mr-2"></i> Switch Theme
+            </button>
+            <button id="admin-panel-btn" onclick="document.getElementById('admin-modal').classList.remove('hidden')" class="hidden w-full text-left p-2 text-[10px] text-purple-500 font-bold uppercase hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded">
+                <i class="fa-solid fa-crown mr-2"></i> Admin Panel
+            </button>
+            <button onclick="signOut()" class="w-full text-left p-2 text-[10px] text-zinc-500 font-bold uppercase hover:text-red-500"><i class="fa-solid fa-power-off mr-2"></i> Logout</button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col bg-[#131314]">
-        <header class="h-14 flex items-center px-6 border-b border-zinc-800"><span class="brand-text text-xl">RiteGPT</span></header>
-        <div id="chat-flow" class="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col"><div id="chat-render" class="max-w-3xl mx-auto w-full flex flex-col"></div></div>
+    <main class="flex-1 flex flex-col min-w-0">
+        <header class="h-14 flex items-center px-6 border-b dark:border-zinc-800 justify-between">
+            <span class="brand-text text-xl">RiteGPT</span>
+            <span id="active-model-name" class="text-[10px] font-bold uppercase opacity-40"></span>
+        </header>
+
+        <div id="chat-flow" class="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col">
+            <div id="chat-render" class="max-w-3xl mx-auto w-full flex flex-col"></div>
+        </div>
         
         <div class="p-4">
             <div class="max-w-3xl mx-auto">
                 <div id="model-selector" class="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1"></div>
-                <div class="relative bg-[#1e1f20] border border-zinc-700 rounded-2xl flex items-end p-2 focus-within:border-zinc-500 transition-all">
-                    <textarea id="chat-input" rows="1" placeholder="Type a message..." class="w-full bg-transparent p-3 outline-none resize-none text-sm"></textarea>
-                    <button id="send-btn" class="p-3 text-blue-500"><i class="fa-solid fa-paper-plane text-lg"></i></button>
+                <div class="relative bg-zinc-100 dark:bg-[#1e1f20] border border-transparent dark:border-zinc-700 rounded-2xl flex items-end p-2 focus-within:border-blue-500 transition-all">
+                    <textarea id="chat-input" rows="1" placeholder="Message RiteGPT..." class="w-full bg-transparent p-3 outline-none resize-none text-sm"></textarea>
+                    <button id="send-btn" class="p-3 text-blue-500 hover:scale-110 transition-transform"><i class="fa-solid fa-paper-plane text-lg"></i></button>
                 </div>
             </div>
         </div>
     </main>
 
     <div id="admin-modal" class="fixed inset-0 bg-black/80 z-[200] hidden flex items-center justify-center p-4">
-        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-sm">
-            <h2 class="text-lg font-bold mb-4">System Settings</h2>
-            <input type="password" id="adm-key" placeholder="OpenRouter API Key" class="w-full p-4 rounded-xl bg-zinc-800 border-none mb-3 outline-none text-sm">
-            <textarea id="adm-models" placeholder="Model IDs (comma separated)" class="w-full p-4 rounded-xl bg-zinc-800 border-none mb-6 h-32 outline-none text-sm"></textarea>
+        <div class="bg-white dark:bg-zinc-900 p-6 rounded-3xl w-full max-w-sm">
+            <h2 class="text-lg font-bold mb-4">Admin Config</h2>
+            <input type="password" id="adm-key" placeholder="OpenRouter API Key" class="w-full p-4 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none mb-3 outline-none text-sm">
+            <textarea id="adm-models" placeholder="Model IDs (comma separated)" class="w-full p-4 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none mb-6 h-32 outline-none text-sm"></textarea>
             <div class="flex gap-2">
-                <button onclick="saveConfig()" class="flex-1 py-3 bg-blue-600 rounded-xl font-bold">Save</button>
-                <button onclick="document.getElementById('admin-modal').classList.add('hidden')" class="flex-1 py-3 bg-zinc-800 rounded-xl font-bold">Cancel</button>
+                <button onclick="saveConfig()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold">Save</button>
+                <button onclick="document.getElementById('admin-modal').classList.add('hidden')" class="flex-1 py-3 bg-zinc-200 dark:bg-zinc-800 rounded-xl font-bold">Cancel</button>
             </div>
         </div>
     </div>
@@ -83,7 +114,6 @@
                 document.getElementById('auth-overlay').style.display = 'none';
                 if(state.user.email === "admin@ritegpt.pro") document.getElementById('admin-panel-btn').classList.remove('hidden');
                 await loadConfig();
-                await loadHistory();
             }
         }
 
@@ -102,42 +132,59 @@
             container.innerHTML = '';
             state.models.forEach(m => {
                 const p = document.createElement('div');
+                const simpleName = m.split('/').pop().replace(':free','').toUpperCase();
                 p.className = `model-pill ${m === state.activeModel ? 'active' : ''}`;
-                p.innerText = m.split('/').pop().replace(':free','').toUpperCase();
-                p.onclick = () => { state.activeModel = m; renderModels(); };
+                p.innerText = simpleName;
+                p.onclick = () => { 
+                    state.activeModel = m; 
+                    document.getElementById('active-model-name').innerText = simpleName;
+                    renderModels(); 
+                };
                 container.appendChild(p);
             });
+            document.getElementById('active-model-name').innerText = state.activeModel.split('/').pop().toUpperCase();
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
         }
 
         async function runChat() {
             const input = document.getElementById('chat-input');
             const prompt = input.value.trim(); if(!prompt) return;
             input.value = ''; addBubble('user', prompt);
-            const ai = addBubble('ai', '...');
+            const ai = addBubble('ai', '<i class="fa-solid fa-spinner fa-spin"></i>');
             
-            const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${state.key}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ model: state.activeModel, messages: [{role: "user", content: prompt}] })
-            });
-            const d = await res.json();
-            const reply = d.choices[0].message.content;
-            ai.innerHTML = marked.parse(reply);
-            await _sb.from('messages').insert([{ user_id: state.user.id, role: 'user', content: prompt }, { user_id: state.user.id, role: 'assistant', content: reply }]);
+            try {
+                const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${state.key}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ model: state.activeModel, messages: [{role: "user", content: prompt}] })
+                });
+                const d = await res.json();
+                ai.innerHTML = marked.parse(d.choices[0].message.content);
+                await _sb.from('messages').insert([{ user_id: state.user.id, role: 'user', content: prompt }, { user_id: state.user.id, role: 'assistant', content: d.choices[0].message.content }]);
+            } catch (e) { ai.innerText = "Error fetching response."; }
         }
 
         function addBubble(role, text) {
             const div = document.createElement('div');
-            div.className = `chat-bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble'}`;
+            div.className = `chat-bubble ${role === 'user' ? 'user' : 'ai'}`;
             div.innerHTML = role === 'user' ? text : marked.parse(text);
             document.getElementById('chat-render').appendChild(div);
+            document.getElementById('chat-flow').scrollTo(0, 99999);
             return div;
         }
 
         function toggleAuthMode() {
             state.isSignUp = !state.isSignUp;
             document.getElementById('auth-btn').innerText = state.isSignUp ? "Sign Up" : "Sign In";
-            document.getElementById('auth-toggle-text').innerText = state.isSignUp ? "Log In" : "Create Account";
         }
 
         document.getElementById('auth-form').onsubmit = async (e) => {
@@ -156,6 +203,7 @@
 
         async function signOut() { await _sb.auth.signOut(); location.reload(); }
         document.getElementById('send-btn').onclick = runChat;
+        document.getElementById('chat-input').onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runChat(); } };
         init();
     </script>
 </body>
