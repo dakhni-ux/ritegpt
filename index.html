@@ -2,233 +2,187 @@
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RiteGPT | Universal AI</title>
-    <link rel="icon" type="image/png" href="logo.png">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiteGPT | Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        :root { --sidebar-bg: #f0f4f9; --chat-bg: #ffffff; }
-        .dark { --sidebar-bg: #1e1f20; --chat-bg: #131314; }
-        body { background-color: var(--chat-bg); font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
-        
-        /* Watermark Logo */
-        #messages-container::before {
-            content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 250px; height: 250px; background: url('logo.png') no-repeat center;
-            background-size: contain; opacity: 0.04; pointer-events: none; z-index: 0;
-        }
-
         .brand-text { background: linear-gradient(135deg, #4285f4, #9b72f3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
-
-        /* Alignment */
-        .message-row { display: flex; width: 100%; margin-bottom: 2rem; position: relative; z-index: 1; }
-        .row-user { justify-content: flex-end; }
-        .row-user .content { background: #f0f4f9; border-radius: 20px 4px 20px 20px; padding: 12px 18px; color: #1f1f1f; margin-right: 12px; max-width: 80%; }
-        .dark .row-user .content { background: #2f2f2f; color: #e3e3e3; }
-
-        .row-ai { justify-content: flex-start; }
-        .row-ai .content { padding: 8px 0; color: #3c4043; max-width: 85%; }
-        .dark .row-ai .content { color: #e3e3e3; }
-
-        .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 9px; flex-shrink: 0; }
-        .ai-avatar { background: linear-gradient(135deg, #4285f4, #9b72f3); color: white; margin-right: 15px; }
-        .user-avatar { background: #e8eaed; color: #5f6368; margin-left: 15px; }
-
-        .model-pill { background: #f0f4f9; border: 1px solid #dfe1e5; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        .model-pill:hover { background: #e8eaed; }
-        .model-pill.active { background: #000; color: #fff; border-color: #000; }
-        .dark .model-pill { background: #1e1f20; border-color: #333; color: #aaa; }
-        .dark .model-pill.active { background: #fff; color: #000; }
-
-        #auth-overlay { position: fixed; inset: 0; z-index: 200; background: white; display: flex; align-items: center; justify-content: center; }
-        .dark #auth-overlay { background: #131314; }
+        .dark { background-color: #131314; color: #e3e3e3; }
+        .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; margin-bottom: 10px; }
+        .user-bubble { background: #f0f4f9; align-self: flex-end; color: #1f1f1f; }
+        .ai-bubble { background: transparent; align-self: flex-start; }
+        .model-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #333; font-size: 11px; cursor: pointer; transition: 0.3s; }
+        .model-btn.active { background: #4285f4; border-color: #4285f4; color: white; }
+        #history-sidebar::-webkit-scrollbar { width: 4px; }
+        #history-sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
-<body class="flex h-full text-slate-900 dark:text-slate-100">
+<body class="flex h-full dark">
 
-    <div id="auth-overlay">
-        <div class="max-w-sm w-full p-8 text-center">
-            <img src="logo.png" class="w-20 h-20 mx-auto mb-4">
-            <h1 class="text-4xl brand-text mb-2">RiteGPT</h1>
-            <form id="auth-form" class="space-y-4 mt-8">
-                <input type="email" id="email" placeholder="Email" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none">
-                <input type="password" id="password" placeholder="Password" required class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none">
-                <button type="submit" class="w-full py-4 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold rounded-2xl">Sign In</button>
-            </form>
-            <button id="toggle-auth" class="mt-6 text-sm text-blue-600 font-bold">New user? Sign Up</button>
+    <aside class="w-64 bg-[#1e1f20] border-r border-zinc-800 flex flex-col hidden md:flex">
+        <div class="p-4 border-b border-zinc-800">
+            <button onclick="newChat()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm font-bold transition-all">+ New Chat</button>
         </div>
-    </div>
-
-    <aside class="w-64 bg-[#f0f4f9] dark:bg-[#1e1f20] hidden md:flex flex-col border-r border-transparent">
-        <div class="p-6"><button onclick="location.reload()" class="w-full py-3 bg-white dark:bg-white/5 rounded-full text-sm font-semibold shadow-sm">+ New Chat</button></div>
-        <div class="flex-1 px-4 overflow-y-auto" id="history-sidebar"></div>
-        <div class="p-4 border-t dark:border-zinc-800">
-            <div id="admin-gate" class="hidden">
-                <button onclick="document.getElementById('set-modal').classList.remove('hidden')" class="w-full text-left p-2 text-[10px] font-black uppercase text-purple-500 hover:bg-purple-100 rounded-lg">
-                    <i class="fa-solid fa-gear mr-2"></i> System Settings
-                </button>
+        <div id="history-sidebar" class="flex-1 overflow-y-auto p-3 space-y-2">
             </div>
-            <button onclick="signOut()" class="w-full text-left p-2 text-[10px] font-black uppercase text-slate-400 hover:text-red-500"><i class="fa-solid fa-power-off mr-2"></i> Log Out</button>
+        <div class="p-4 space-y-2 border-t border-zinc-800">
+            <button id="admin-btn" onclick="document.getElementById('admin-modal').classList.remove('hidden')" class="hidden w-full text-left p-2 text-[10px] text-purple-400 font-bold uppercase hover:bg-zinc-800 rounded">
+                <i class="fa-solid fa-crown mr-2"></i> Admin Panel
+            </button>
+            <button onclick="signOut()" class="w-full text-left p-2 text-[10px] text-zinc-500 font-bold uppercase hover:text-red-400">
+                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+            </button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-full relative">
-        <header class="h-16 flex items-center px-6"><span class="text-xl font-bold brand-text">RiteGPT</span></header>
+    <main class="flex-1 flex flex-col h-full">
+        <header class="h-14 border-b border-zinc-800 flex items-center px-6">
+            <h1 class="brand-text text-xl">RiteGPT</h1>
+        </header>
 
-        <div id="messages-container" class="flex-1 overflow-y-auto px-6">
-            <div class="max-w-4xl mx-auto py-10" id="chat-flow">
-                <div id="chat-start" class="text-center py-20">
-                    <h2 class="text-4xl font-bold text-slate-200 dark:text-zinc-800">RiteGPT</h2>
-                    <p class="text-slate-400 mt-2">Pick a model and start chatting.</p>
-                </div>
+        <div id="chat-container" class="flex-1 overflow-y-auto p-6 flex flex-col space-y-4">
+            <div id="welcome-screen" class="text-center mt-20">
+                <h2 class="text-3xl font-bold opacity-20">How can I help you today?</h2>
             </div>
         </div>
 
-        <div class="p-4 md:pb-8">
-            <div class="max-w-3xl mx-auto">
-                <div id="model-selector" class="flex gap-2 mb-3 overflow-x-auto pb-2 no-scrollbar">
-                    </div>
-
-                <div class="bg-[#f0f4f9] dark:bg-[#1e1f20] rounded-3xl p-2 flex items-end border border-transparent focus-within:border-slate-300 transition-all">
-                    <textarea id="chat-input" rows="1" placeholder="Type a message..." class="flex-1 bg-transparent p-3 outline-none resize-none"></textarea>
-                    <button id="send-btn" class="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-blue-500"><i class="fa-solid fa-paper-plane"></i></button>
+        <div class="p-4 max-w-4xl mx-auto w-full">
+            <div id="model-switcher" class="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-2">
                 </div>
+            <div class="relative bg-zinc-900 border border-zinc-700 rounded-2xl flex items-end p-2 focus-within:border-blue-500 transition-all">
+                <textarea id="user-input" rows="1" placeholder="Ask anything..." class="w-full bg-transparent p-3 outline-none resize-none text-sm"></textarea>
+                <button id="send-btn" class="p-3 text-blue-500 hover:scale-110 transition-transform"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
     </main>
 
-    <div id="set-modal" class="fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-zinc-900 w-full max-w-md p-8 rounded-3xl">
-            <h3 class="text-xl font-bold mb-4">Admin Config</h3>
-            <p class="text-xs text-slate-400 mb-4">Enter Model IDs separated by commas (e.g. google/gemini-pro, openai/gpt-4)</p>
-            <input type="password" id="api-in" placeholder="OpenRouter API Key" class="w-full p-4 rounded-xl border mb-4 dark:bg-zinc-800 outline-none">
-            <textarea id="model-in" placeholder="List of Models (comma separated)" class="w-full p-4 rounded-xl border mb-6 dark:bg-zinc-800 outline-none h-24"></textarea>
+    <div id="admin-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-zinc-900 border border-zinc-700 p-8 rounded-3xl w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">Admin Config</h2>
+            <input type="password" id="api-key-input" placeholder="OpenRouter API Key" class="w-full p-4 rounded-xl bg-zinc-800 border-zinc-700 mb-4 outline-none">
+            <textarea id="model-list-input" placeholder="Model IDs (comma separated)" class="w-full p-4 rounded-xl bg-zinc-800 border-zinc-700 mb-6 h-32 outline-none"></textarea>
             <div class="flex gap-3">
-                <button onclick="saveSet()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-bold">Save Changes</button>
-                <button onclick="document.getElementById('set-modal').classList.add('hidden')" class="flex-1 py-4 bg-slate-100 dark:bg-zinc-800 rounded-2xl font-bold">Cancel</button>
+                <button onclick="saveAdminSettings()" class="flex-1 py-4 bg-blue-600 rounded-2xl font-bold">Save Changes</button>
+                <button onclick="document.getElementById('admin-modal').classList.add('hidden')" class="flex-1 py-4 bg-zinc-800 rounded-2xl font-bold">Close</button>
             </div>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = "https://rteqdgcihjgztlpgradu.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0ZXFkZ2NpaGpnenRscGdyYWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyOTkyMDAsImV4cCI6MjA4NTg3NTIwMH0.hS76HmVox1cD9542ZXSyFoQzWPRHZvqi3DQGpdFn4Rc";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SB_URL = "https://rteqdgcihjgztlpgradu.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0ZXFkZ2NpaGpnenRscGdyYWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyOTkyMDAsImV4cCI6MjA4NTg3NTIwMH0.hS76HmVox1cD9542ZXSyFoQzWPRHZvqi3DQGpdFn4Rc";
+        const _sb = supabase.createClient(SB_URL, SB_KEY);
 
         let system = { key: "", models: [], activeModel: "" };
-        let isSignUp = false;
 
         async function init() {
-            const { data: { session } } = await _supabase.auth.getSession();
-            if (session) renderUser(session.user);
-            _supabase.auth.onAuthStateChange((_event, session) => { if(session) renderUser(session.user); });
+            const { data: { user } } = await _sb.auth.getUser();
+            if (!user) { window.location.href = "login.html"; return; } // Adjust to your login page filename
+            
+            if (user.email === "admin@ritegpt.pro") {
+                document.getElementById('admin-btn').classList.remove('hidden');
+            }
+
+            await fetchConfig();
+            await fetchHistory();
         }
 
-        async function renderUser(user) {
-            document.getElementById('auth-overlay').style.display = 'none';
-            if (user.email.includes('admin@ritegpt')) document.getElementById('admin-gate').classList.remove('hidden');
-            await loadConfig();
-            await loadHistory();
-        }
-
-        async function loadConfig() {
-            const { data } = await _supabase.from('config').select('*').eq('key_name', 'admin_settings').single();
+        async function fetchConfig() {
+            // Fix: Pull the LATEST row by ordering by ID descending
+            const { data } = await _sb.from('config').select('*').order('id', { ascending: false }).limit(1).single();
             if (data) {
                 system.key = data.api_key;
                 system.models = data.model_name.split(',').map(m => m.trim());
                 system.activeModel = system.models[0];
-                renderModelPills();
-                document.getElementById('api-in').value = system.key;
-                document.getElementById('model-in').value = data.model_name;
+                renderModelSwitcher();
             }
         }
 
-        function renderModelPills() {
-            const container = document.getElementById('model-selector');
+        function renderModelSwitcher() {
+            const container = document.getElementById('model-switcher');
             container.innerHTML = '';
-            system.models.forEach(model => {
-                const pill = document.createElement('div');
-                pill.className = `model-pill ${model === system.activeModel ? 'active' : ''}`;
-                pill.innerText = model.split('/').pop().toUpperCase();
-                pill.onclick = () => {
-                    system.activeModel = model;
-                    renderModelPills();
-                };
-                container.appendChild(pill);
+            system.models.forEach(m => {
+                const btn = document.createElement('button');
+                btn.className = `model-btn ${m === system.activeModel ? 'active' : ''}`;
+                btn.innerText = m.split('/').pop().replace(':free', '').toUpperCase();
+                btn.onclick = () => { system.activeModel = m; renderModelSwitcher(); };
+                container.appendChild(btn);
             });
         }
 
-        async function saveSet() {
-            const k = document.getElementById('api-in').value;
-            const m = document.getElementById('model-in').value;
-            await _supabase.from('config').upsert({ key_name: 'admin_settings', api_key: k, model_name: m });
-            alert("Saved! Reloading...");
+        async function fetchHistory() {
+            const { data } = await _sb.from('messages').select('*').order('created_at', { ascending: false });
+            const sidebar = document.getElementById('history-sidebar');
+            sidebar.innerHTML = '';
+            
+            if (data) {
+                // Group messages by content to show unique chat titles
+                const uniqueThreads = [...new Map(data.filter(m => m.role === 'user').map(item => [item.content.substring(0, 30), item])).values()];
+                uniqueThreads.forEach(thread => {
+                    const div = document.createElement('div');
+                    div.className = "p-3 text-xs text-zinc-400 hover:bg-zinc-800 rounded-lg cursor-pointer truncate transition-all";
+                    div.innerHTML = `<i class="fa-regular fa-message mr-2 opacity-50"></i> ${thread.content}`;
+                    div.onclick = () => loadFullChat(thread.content);
+                    sidebar.appendChild(div);
+                });
+            }
+        }
+
+        async function runChat() {
+            const input = document.getElementById('user-input');
+            const prompt = input.value.trim();
+            if (!prompt || !system.key) return;
+
+            input.value = '';
+            document.getElementById('welcome-screen').classList.add('hidden');
+            appendBubble('user', prompt);
+            const aiRef = appendBubble('ai', '...');
+
+            try {
+                const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${system.key}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ model: system.activeModel, messages: [{role: "user", content: prompt}] })
+                });
+                const d = await res.json();
+                const reply = d.choices[0].message.content;
+                aiRef.innerHTML = marked.parse(reply);
+                saveMessage('user', prompt);
+                saveMessage('assistant', reply);
+            } catch (e) { aiRef.innerText = "Error connecting to AI."; }
+        }
+
+        function appendBubble(role, text) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = `chat-bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble'}`;
+            div.innerHTML = role === 'user' ? text : marked.parse(text);
+            container.appendChild(div);
+            container.scrollTo(0, container.scrollHeight);
+            return div;
+        }
+
+        async function saveMessage(role, content) {
+            const { data: { user } } = await _sb.auth.getUser();
+            await _sb.from('messages').insert([{ user_id: user.id, role, content }]);
+            fetchHistory(); // Refresh sidebar
+        }
+
+        async function saveAdminSettings() {
+            const k = document.getElementById('api-key-input').value;
+            const m = document.getElementById('model-list-input').value;
+            await _sb.from('config').insert([{ key_name: 'admin_settings', api_key: k, model_name: m }]);
             location.reload();
         }
 
-        async function runAI() {
-            const input = document.getElementById('chat-input');
-            const prompt = input.value.trim(); if(!prompt) return;
-            input.value = ''; document.getElementById('chat-start').style.display = 'none';
-            
-            appendMsg('user', prompt, true);
-            const aiBox = appendMsg('ai', '...', false);
+        function newChat() { location.reload(); }
+        async function signOut() { await _sb.auth.signOut(); location.reload(); }
 
-            const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${system.key}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ model: system.activeModel, messages: [{role: "user", content: prompt}] })
-            });
-            const d = await res.json();
-            const reply = d.choices[0].message.content;
-            aiBox.innerHTML = marked.parse(reply);
-            saveToCloud('ai', reply);
-        }
-
-        function appendMsg(role, content, save = false) {
-            const div = document.createElement('div');
-            div.className = `message-row row-${role}`;
-            div.innerHTML = `
-                <div class="${role === 'user' ? 'user-avatar' : 'ai-avatar'} avatar">${role === 'user' ? 'U' : 'RiteGPT'}</div>
-                <div class="content">${role === 'ai' ? marked.parse(content) : content}</div>
-            `;
-            document.getElementById('chat-flow').appendChild(div);
-            if(save) saveToCloud(role, content);
-            document.getElementById('messages-container').scrollTo(0, 99999);
-            return div.querySelector('.content');
-        }
-
-        async function saveToCloud(role, content) {
-            const { data: { user } } = await _supabase.auth.getUser();
-            await _supabase.from('messages').insert([{ user_id: user.id, role, content }]);
-        }
-
-        async function loadHistory() {
-            const { data } = await _supabase.from('messages').select('*').order('created_at', { ascending: true });
-            if (data && data.length > 0) {
-                document.getElementById('chat-start').style.display = 'none';
-                data.forEach(msg => appendMsg(msg.role, msg.content));
-            }
-        }
-
-        document.getElementById('auth-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            if(isSignUp) await _supabase.auth.signUp({ email, password });
-            else await _supabase.auth.signInWithPassword({ email, password });
-        };
-
-        document.getElementById('toggle-auth').onclick = () => { isSignUp = !isSignUp; document.getElementById('auth-title').innerText = isSignUp ? "Sign Up" : "RiteGPT"; };
-        async function signOut() { await _supabase.auth.signOut(); location.reload(); }
-        document.getElementById('send-btn').onclick = runAI;
-        document.getElementById('chat-input').onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runAI(); } };
+        document.getElementById('send-btn').onclick = runChat;
+        document.getElementById('user-input').onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runChat(); } };
 
         init();
     </script>
