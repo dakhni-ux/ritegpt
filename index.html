@@ -3,242 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rite GPT | Universal AI</title>
+    <title>RiteGPT</title>
     <link rel="icon" type="image/png" href="logo.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        body { background-color: #ffffff; height: 100vh; overflow: hidden; font-family: sans-serif; }
-        .dark body { background-color: #0f172a; }
-
-        /* Centered Branding Watermark */
-        .watermark-layer {
-            position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-            pointer-events: none; z-index: 0; opacity: 0.05;
-        }
-        .watermark-layer img { width: 350px; height: auto; }
-
-        /* Dynamic Message Area */
-        #messages-container {
-            flex: 1; overflow-y: auto; display: flex; flex-direction: column;
-            padding: 1.5rem; z-index: 10; scroll-behavior: smooth;
-        }
-
-        .bubble { max-width: 85%; padding: 1rem; border-radius: 1.25rem; margin-bottom: 1rem; position: relative; }
-        .user-bubble { background: #8b5cf6; color: white; align-self: flex-end; border-bottom-right-radius: 0; }
-        .ai-bubble { background: #f1f5f9; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 0; }
-        .dark .ai-bubble { background: #1e293b; color: #f1f5f9; }
-
-        /* Layout Overlays */
-        #auth-overlay { position: fixed; inset: 0; z-index: 100; background: white; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
-        .dark #auth-overlay { background: #0f172a; }
+        :root { --gemini-bg: #f8fafc; --gemini-card: #ffffff; }
+        .dark { --gemini-bg: #131314; --gemini-card: #1e1f20; }
         
-        #sidebar { transition: transform 0.3s ease; }
-        @media (max-width: 768px) { #sidebar { position: absolute; height: 100%; z-index: 40; } }
+        body { background-color: var(--gemini-bg); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; overflow: hidden; transition: background 0.3s; }
+        
+        /* Centered Watermark */
+        .watermark-layer { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; opacity: 0.03; z-index: 0; }
+        .watermark-layer img { width: 400px; }
 
-        .social-icon-btn {
-            padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 1rem;
-            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-        }
-        .dark .social-icon-btn { border-color: #334155; }
+        /* Gemini-style Bubbles */
+        .bubble { max-width: 85%; padding: 1rem 1.25rem; margin-bottom: 1.5rem; line-height: 1.6; position: relative; }
+        .user-bubble { background: #f0f4f9; color: #1f1f1f; align-self: flex-end; border-radius: 1.5rem 1.5rem 0.2rem 1.5rem; }
+        .ai-bubble { align-self: flex-start; border-radius: 0.2rem 1.5rem 1.5rem 1.5rem; width: 100%; }
+        .dark .user-bubble { background: #2b2b2b; color: #e3e3e3; }
+
+        /* Animation */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.4s ease forwards; }
+
+        /* Input Container */
+        .input-pill { background: #f0f4f9; border-radius: 32px; transition: all 0.2s; border: 1px solid transparent; }
+        .dark .input-pill { background: #1e1f20; }
+        .input-pill:focus-within { background: white; border-color: #dee2e6; box-shadow: 0 1px 6px rgba(32,33,36,0.28); }
+        .dark .input-pill:focus-within { background: #1e1f20; border-color: #444746; }
+
+        #auth-overlay { position: fixed; inset: 0; z-index: 100; background: white; display: flex; align-items: center; justify-content: center; }
+        .dark #auth-overlay { background: #131314; }
     </style>
 </head>
-<body class="flex flex-row dark:text-white">
+<body class="flex h-full text-slate-900 dark:text-slate-100">
 
     <div class="watermark-layer"><img src="logo.png" onerror="this.src='./logo.png';"></div>
 
     <div id="auth-overlay">
-        <div class="max-w-md w-full p-8 text-center my-auto">
-            <img src="logo.png" class="w-20 h-20 mx-auto mb-4" onerror="this.src='./logo.png';">
-            <h1 class="text-3xl font-black mb-6 tracking-tighter text-purple-600">RITE GPT</h1>
-            
-            <form id="login-form" class="space-y-4 text-left mb-6">
-                <div>
-                    <label class="text-[10px] font-bold uppercase text-slate-400 ml-1">Identity</label>
-                    <input type="email" id="auth-email" placeholder="Email Address" required 
-                        class="w-full p-4 mt-1 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold uppercase text-slate-400 ml-1">Security Key</label>
-                    <input type="password" id="auth-password" placeholder="Password" required 
-                        class="w-full p-4 mt-1 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500">
-                </div>
-                <button type="submit" class="w-full py-4 bg-purple-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-transform">
-                    Authorize Access
-                </button>
+        <div class="max-w-sm w-full p-8 text-center">
+            <img src="logo.png" class="w-16 h-16 mx-auto mb-6" onerror="this.src='./logo.png';">
+            <h1 class="text-4xl font-medium mb-8 tracking-tight text-slate-800 dark:text-white">RiteGPT</h1>
+            <form id="login-form" class="space-y-4">
+                <input type="email" id="auth-email" placeholder="Email" required class="w-full p-4 rounded-xl border dark:bg-zinc-900 dark:border-zinc-800 outline-none">
+                <input type="password" id="auth-password" placeholder="Password" required class="w-full p-4 rounded-xl border dark:bg-zinc-900 dark:border-zinc-800 outline-none">
+                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg active:scale-95">Sign in</button>
             </form>
-
-            <div class="relative flex items-center gap-4 mb-6">
-                <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
-                <span class="text-[10px] text-slate-400 uppercase font-black">Third-Party Sign-In</span>
-                <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-3 mb-8">
-                <button onclick="socialIn('Google')" class="social-icon-btn hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-5 h-5">
-                </button>
-                <button onclick="socialIn('Outlook')" class="social-icon-btn hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" class="w-5 h-5">
-                </button>
-                <button onclick="socialIn('Apple')" class="social-icon-btn hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <i class="fa-brands fa-apple text-xl"></i>
-                </button>
-            </div>
-
-            <button id="forgot-btn" class="text-purple-500 text-xs font-bold uppercase tracking-widest hover:underline">
-                Request SMTP Password Reset
-            </button>
+            <button id="forgot-btn" class="mt-6 text-sm text-blue-500 font-medium hover:underline">Reset via SMTP</button>
         </div>
     </div>
 
-    <aside id="sidebar" class="w-64 bg-slate-50 dark:bg-slate-900 border-r dark:border-slate-800 flex flex-col -translate-x-full md:translate-x-0">
-        <div class="p-6 border-b dark:border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-2 font-black text-purple-600"><img src="logo.png" class="w-6 h-6"> RITE</div>
-            <button class="md:hidden" onclick="toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <button onclick="newChat()" class="m-4 p-4 bg-white dark:bg-slate-800 rounded-2xl text-xs font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all">
-            <i class="fa-solid fa-plus mr-2"></i> New Instance
-        </button>
-        <div class="flex-1 overflow-y-auto px-4" id="history"></div>
-        <div id="admin-gate" class="p-4 border-t dark:border-slate-800 hidden">
-            <button onclick="document.getElementById('set-modal').classList.remove('hidden')" class="w-full p-3 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-purple-600">
-                <i class="fa-solid fa-sliders mr-2"></i> Core Settings
+    <aside id="sidebar" class="w-72 bg-[#f0f4f9] dark:bg-[#1e1f20] hidden md:flex flex-col border-r border-transparent">
+        <div class="p-4">
+            <button onclick="newChat()" class="flex items-center gap-3 px-4 py-3 bg-slate-200 dark:bg-[#2b2b2b] rounded-full text-sm font-medium hover:bg-slate-300 transition-all">
+                <i class="fa-solid fa-plus"></i> New Chat
             </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-2 space-y-1" id="history"></div>
+        <div class="p-4 border-t border-slate-200 dark:border-zinc-800">
+            <button onclick="emailTranscript()" class="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-lg text-sm">
+                <i class="fa-solid fa-download"></i> Export Chat
+            </button>
+            <div id="admin-gate" class="hidden mt-2">
+                <button onclick="document.getElementById('set-modal').classList.remove('hidden')" class="w-full flex items-center gap-3 px-4 py-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-sm font-bold uppercase tracking-tighter">
+                    <i class="fa-solid fa-sliders"></i> Admin Settings
+                </button>
+            </div>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-        <header class="h-16 flex items-center justify-between px-6 border-b dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-30">
-            <button class="md:hidden" onclick="toggleSidebar()"><i class="fa-solid fa-bars-staggered"></i></button>
-            <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]" id="model-tag">DeepSeek-R1 Interface</div>
-            <button onclick="location.reload()" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-power-off"></i></button>
+    <main class="flex-1 flex flex-col relative h-full">
+        <header class="h-16 flex items-center justify-between px-6 z-10">
+            <div class="flex items-center gap-3">
+                <button class="md:hidden" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                <span class="text-xl font-medium">RiteGPT</span>
+                <span id="model-tag" class="text-[10px] px-2 py-1 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300 rounded-md font-bold uppercase tracking-widest">Syncing Cloud...</span>
+            </div>
+            <button onclick="location.reload()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">
+                <i class="fa-solid fa-power-off text-slate-400"></i>
+            </button>
         </header>
 
-        <div id="messages-container">
-            <div class="bubble ai-bubble shadow-sm">Rite GPT is online. Awaiting your instructions.</div>
+        <div id="messages-container" class="flex-1 flex flex-col p-4 md:p-8 overflow-y-auto space-y-6">
             <div id="anchor"></div>
         </div>
 
-        <div class="p-4 bg-transparent z-20">
-            <div class="max-w-4xl mx-auto flex gap-3 items-end bg-white dark:bg-slate-800 p-2 rounded-[2rem] shadow-2xl border dark:border-slate-700">
-                <textarea id="chat-input" rows="1" placeholder="Describe your objective..." class="flex-1 bg-transparent p-4 outline-none resize-none text-sm"></textarea>
-                <button id="send-btn" class="w-12 h-12 bg-purple-600 text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-purple-500/20">
-                    <i class="fa-solid fa-arrow-up"></i>
-                </button>
+        <div class="p-4 md:pb-8">
+            <div class="max-w-3xl mx-auto">
+                <div class="input-pill flex items-end p-2 px-4 shadow-sm">
+                    <textarea id="chat-input" rows="1" placeholder="Enter a prompt here" class="flex-1 bg-transparent p-3 outline-none resize-none text-base min-h-[56px] max-h-[200px]"></textarea>
+                    <button id="send-btn" class="w-12 h-12 flex items-center justify-center text-slate-500 hover:text-blue-600 transition-colors">
+                        <i class="fa-solid fa-paper-plane text-xl"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </main>
 
-    <div id="set-modal" class="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-sm p-8 rounded-[2.5rem] shadow-2xl border dark:border-slate-800">
-            <h2 class="text-xl font-black mb-6">Core Configuration</h2>
-            <div class="space-y-5">
-                <div><label class="text-[10px] font-black uppercase text-slate-400">OpenRouter API</label><input type="password" id="api-in" class="w-full p-4 mt-1 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none"></div>
-                <div><label class="text-[10px] font-black uppercase text-slate-400">Target Model</label><input type="text" id="model-in" class="w-full p-4 mt-1 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none"></div>
+    <div id="set-modal" class="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#1e1f20] w-full max-w-sm p-8 rounded-3xl shadow-2xl">
+            <h2 class="text-xl font-semibold mb-6">Cloud Configuration</h2>
+            <div class="space-y-4">
+                <input type="password" id="api-in" placeholder="OpenRouter API Key" class="w-full p-4 rounded-xl border dark:bg-zinc-900 dark:border-zinc-800 outline-none">
+                <input type="text" id="model-in" placeholder="Model Path" class="w-full p-4 rounded-xl border dark:bg-zinc-900 dark:border-zinc-800 outline-none">
             </div>
             <div class="mt-8 flex gap-3">
-                <button onclick="saveSet()" class="flex-1 py-4 bg-purple-600 text-white font-bold rounded-2xl">Update</button>
-                <button onclick="document.getElementById('set-modal').classList.add('hidden')" class="flex-1 py-4 bg-slate-100 dark:bg-slate-800 font-bold rounded-2xl">Cancel</button>
+                <button onclick="saveSet()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium">Update Cloud</button>
+                <button onclick="document.getElementById('set-modal').classList.add('hidden')" class="flex-1 py-3 bg-slate-100 dark:bg-zinc-800 rounded-xl font-medium">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- EMAILJS SMTP CONFIG ---
-        const SERVICE_ID = "service_razdczy";
-        const TEMPLATE_ID = "template_e4up41f";
-        const PUBLIC_KEY = "jOxlqFxqQPyPsIC5o";
+        // --- 1. SUPABASE INTEGRATION (USING YOUR PROVIDED KEY) ---
+        const SUPABASE_URL = "https://rteqdgcihjgztlpgradu.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0ZXFkZ2NpaGpnenRscGdyYWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyOTkyMDAsImV4cCI6MjA4NTg3NTIwMH0.hS76HmVox1cD9542ZXSyFoQzWPRHZvqi3DQGpdFn4Rc"; 
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        emailjs.init(PUBLIC_KEY);
+        emailjs.init("jOxlqFxqQPyPsIC5o");
 
-        let system = {
-            key: "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",
-            model: "deepseek/deepseek-r1:free"
-        };
+        let currentUserEmail = "";
+        let system = { key: "", model: "" };
 
-        const loginForm = document.getElementById('login-form');
-        const authView = document.getElementById('auth-overlay');
-        const chatBox = document.getElementById('messages-container');
-        const input = document.getElementById('chat-input');
-        const sendBtn = document.getElementById('send-btn');
-        const anchor = document.getElementById('anchor');
+        // --- 2. BACKEND SYNC ---
+        async function loadCloud() {
+            const { data, error } = await _supabase.from('config').select('*').eq('key_name', 'admin_settings').single();
+            if (data) {
+                system.key = data.api_key;
+                system.model = data.model_name;
+                document.getElementById('model-tag').innerText = system.model.split('/')[1] || system.model;
+                document.getElementById('api-in').value = system.key;
+                document.getElementById('model-in').value = system.model;
+            }
+        }
 
-        // --- AUTHENTICATION ---
-        loginForm.onsubmit = (e) => {
+        async function saveSet() {
+            const k = document.getElementById('api-in').value;
+            const m = document.getElementById('model-in').value;
+            const { error } = await _supabase.from('config').upsert({ key_name: 'admin_settings', api_key: k, model_name: m });
+            if (!error) { 
+                system.key = k; system.model = m;
+                document.getElementById('model-tag').innerText = m;
+                document.getElementById('set-modal').classList.add('hidden');
+                alert("Cloud Synced Successfully");
+            }
+        }
+
+        // --- 3. AUTH & UI ---
+        document.getElementById('login-form').onsubmit = (e) => {
             e.preventDefault();
             const email = document.getElementById('auth-email').value.trim().toLowerCase();
             const pass = document.getElementById('auth-password').value.trim();
-            
-            const isRoot = (email === "admin@ritegpt.pro" || email === "admin@ritegpt.com");
-            if (isRoot) {
-                if (pass === "Kani@2211$") {
-                    document.getElementById('admin-gate').classList.remove('hidden');
-                    authView.style.display = 'none';
-                } else { alert("Access Denied: Invalid root password."); }
-            } else { authView.style.display = 'none'; }
+            currentUserEmail = email;
+
+            if ((email === "admin@ritegpt.pro" || email === "admin@ritegpt.com") && pass === "Kani@2211$") {
+                document.getElementById('admin-gate').classList.remove('hidden');
+            }
+            document.getElementById('auth-overlay').style.display = 'none';
         };
 
-        function socialIn(p) { alert(`Syncing with ${p} gateway...`); authView.style.display = 'none'; }
-
-        // --- SMTP RESET ---
-        document.getElementById('forgot-btn').onclick = async () => {
-            const mail = document.getElementById('auth-email').value;
-            if(!mail) { alert("Identify email account first."); return; }
-            try {
-                await emailjs.send(SERVICE_ID, TEMPLATE_ID, { user_email: mail });
-                alert("SMTP Handshake Success: Reset link dispatched to " + mail);
-            } catch { alert("SMTP Link Failed. Verify Service Status."); }
-        };
-
-        // --- CORE CHAT ---
+        // --- 4. CHAT LOGIC ---
         async function runAI() {
+            const input = document.getElementById('chat-input');
             const prompt = input.value.trim(); if(!prompt) return;
             input.value = ''; input.style.height = 'auto';
-            
-            postMsg('user', prompt);
-            const aiSlot = postMsg('ai', '<i class="fa-solid fa-circle-notch animate-spin text-purple-500"></i> Synchronizing...');
-            
+
+            appendMsg('user', prompt);
+            const aiBox = appendMsg('ai', '<div class="flex gap-1"><div class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce"></div><div class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:-.3s]"></div><div class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:-.5s]"></div></div>');
+
             try {
                 const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${system.key}`, "Content-Type": "application/json" },
                     body: JSON.stringify({ model: system.model, messages: [{role: "user", content: prompt}] })
                 });
-                const data = await res.json();
-                aiSlot.innerHTML = DOMPurify.sanitize(marked.parse(data.choices[0].message.content));
-            } catch { aiSlot.innerText = "Signal Loss: Check OpenRouter API."; }
-            scroll();
+                const d = await res.json();
+                aiBox.innerHTML = DOMPurify.sanitize(marked.parse(d.choices[0].message.content));
+            } catch { aiBox.innerText = "Connection lost. Please check Cloud API settings."; }
         }
 
-        function postMsg(role, html) {
+        function appendMsg(role, content) {
+            const container = document.getElementById('messages-container');
             const div = document.createElement('div');
-            div.className = `bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble shadow-sm border border-slate-100 dark:border-slate-800'}`;
-            div.innerHTML = html;
-            chatBox.insertBefore(div, anchor);
-            scroll();
-            return div;
+            div.className = `bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble'} animate-fade`;
+            div.innerHTML = role === 'ai' ? `
+                <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold">RG</div>
+                    <div class="flex-1">${content}</div>
+                </div>` : content;
+            container.insertBefore(div, document.getElementById('anchor'));
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            return role === 'ai' ? div.querySelector('.flex-1') : div;
         }
 
-        function scroll() { anchor.scrollIntoView({ behavior: 'smooth', block: 'end' }); }
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
-        function newChat() { chatBox.innerHTML = '<div id="anchor"></div>'; if(window.innerWidth < 768) toggleSidebar(); }
-
-        function saveSet() {
-            system.key = document.getElementById('api-in').value || system.key;
-            system.model = document.getElementById('model-in').value || system.model;
-            document.getElementById('model-tag').innerText = system.model;
-            document.getElementById('set-modal').classList.add('hidden');
+        async function emailTranscript() {
+            if (!currentUserEmail) return;
+            const text = Array.from(document.querySelectorAll('.bubble')).map(b => b.innerText).join('\n\n');
+            await emailjs.send("service_razdczy", "template_e4up41f", { user_email: currentUserEmail, message: text });
+            alert("Chat transcript sent to: " + currentUserEmail);
         }
 
-        sendBtn.onclick = runAI;
-        input.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runAI(); } };
-        input.oninput = function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; };
+        document.getElementById('send-btn').onclick = runAI;
+        document.getElementById('chat-input').onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runAI(); } };
+        document.getElementById('chat-input').oninput = function() { this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'; };
+        
+        loadCloud();
     </script>
 </body>
 </html>
