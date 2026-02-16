@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rite GPT | Universal AI</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <title>Rite GPT | AI</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -12,11 +11,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        body { background-color: #ffffff; overflow: hidden; font-family: sans-serif; }
-        .dark body { background-color: #131314; }
+        body { background-color: #ffffff; margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        .dark body { background-color: #0f172a; }
 
-        /* Robust Watermark */
-        .watermark-container {
+        /* Centered Logo Watermark */
+        .watermark-layer {
             position: fixed;
             inset: 0;
             display: flex;
@@ -24,149 +23,90 @@
             justify-content: center;
             pointer-events: none;
             z-index: 0;
-            opacity: 0.04; /* Very subtle */
+            opacity: 0.05;
         }
-        .watermark-img {
-            max-width: 400px;
-            width: 60%;
-            filter: grayscale(100%);
-        }
+        .watermark-layer img { width: 300px; height: auto; }
 
-        #loading {
-            position: fixed;
-            inset: 0;
-            z-index: 100;
-            background: white;
+        /* Force scroll area to take remaining height */
+        #messages {
+            flex: 1;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            scroll-behavior: smooth;
         }
 
-        /* Message Bubbles */
-        .msg-user { background-color: #8b5cf6; color: white; border-radius: 1.5rem 1.5rem 0 1.5rem; }
-        .msg-ai { background-color: #f3f4f6; color: #1f2937; border-radius: 1.5rem 1.5rem 1.5rem 0; }
-        .dark .msg-ai { background-color: #27272a; color: #f3f4f6; }
+        .msg-bubble { max-width: 85%; padding: 1rem; border-radius: 1rem; position: relative; }
+        .user-msg { background: #8b5cf6; color: white; align-self: flex-end; border-bottom-right-radius: 0; }
+        .ai-msg { background: #f1f5f9; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 0; }
+        .dark .ai-msg { background: #1e293b; color: #f1f5f9; }
+
+        #input-area { padding: 1rem; border-top: 1px solid #e2e8f0; background: white; z-index: 10; }
+        .dark #input-area { background: #0f172a; border-color: #334155; }
     </style>
 </head>
-<body class="h-full text-slate-900 dark:text-slate-100">
+<body class="dark:text-white">
 
-    <div id="loading">
-        <img src="logo.png" class="w-20 h-20 mb-4 animate-bounce" onerror="this.src='https://ui-avatars.com/api/?name=Rite+GPT&background=8b5cf6&color=fff'">
-        <p class="font-bold text-xl text-purple-600">Rite GPT</p>
+    <div class="watermark-layer">
+        <img src="logo.png" alt="" onerror="this.src='./logo.png'; this.onerror=null;">
     </div>
 
-    <div class="watermark-container">
-        <img src="logo.png" class="watermark-img" id="bg-watermark" onerror="this.style.opacity='0'">
-        <h1 id="bg-text" class="absolute text-9xl font-black opacity-10 hidden">RITE</h1>
-    </div>
-
-    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4 relative z-10">
-        <div class="w-full max-w-md bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl p-8 rounded-[2rem] shadow-2xl border border-slate-200 dark:border-zinc-800 text-center">
-            <img src="logo.png" class="w-24 h-24 mx-auto mb-4" onerror="this.src='https://ui-avatars.com/api/?name=R&background=8b5cf6&color=fff'">
-            <h1 class="text-3xl font-black mb-2 tracking-tight">Rite GPT</h1>
-            <p class="text-slate-500 mb-8 text-sm">Universal Intelligence Interface</p>
-            
-            <form id="login-form" class="space-y-4">
-                <input type="email" id="email" placeholder="Email (admin@ritegpt.pro)" required
-                    class="w-full p-4 rounded-2xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-purple-500 transition-all">
-                <button type="submit" class="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl shadow-lg shadow-purple-500/30 transition-all active:scale-95">
-                    Enter Intelligence
-                </button>
-            </form>
-            <button id="guest-btn" class="mt-6 text-slate-400 text-xs uppercase tracking-widest hover:text-purple-500 transition-colors">Continue as Guest</button>
+    <div id="auth-screen" class="fixed inset-0 z-50 bg-white dark:bg-slate-900 flex items-center justify-center p-6 text-center">
+        <div class="max-w-md w-full">
+            <img src="logo.png" class="w-24 h-24 mx-auto mb-4" onerror="this.src='./logo.png';">
+            <h1 class="text-4xl font-bold mb-2">Rite GPT</h1>
+            <p class="text-slate-500 mb-8">Universal AI Workspace</p>
+            <input type="email" id="email-in" placeholder="admin@ritegpt.pro" class="w-full p-4 rounded-xl border dark:bg-slate-800 dark:border-slate-700 mb-4 outline-none">
+            <button onclick="login()" class="w-full py-4 bg-purple-600 text-white font-bold rounded-xl shadow-lg">Enter Chat</button>
         </div>
     </div>
 
-    <div id="app" class="hidden h-full flex relative z-10">
-        <aside class="w-80 bg-slate-50/50 dark:bg-zinc-900/50 backdrop-blur-md border-r dark:border-zinc-800 hidden md:flex flex-col">
-            <div class="p-6 flex items-center gap-3">
-                <img src="logo.png" class="w-10 h-10 rounded-lg" onerror="this.style.display='none'">
-                <span class="font-black text-xl tracking-tighter text-purple-600">Rite GPT</span>
-            </div>
-            <div class="flex-1 p-4 space-y-2" id="chat-list">
-                <div class="p-3 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-700 text-sm font-medium cursor-pointer">
-                    <i class="fa-regular fa-comment-dots mr-2 text-purple-500"></i> Current Session
-                </div>
-            </div>
-            <div class="p-6 border-t dark:border-zinc-800 text-xs text-slate-400">
-                Logged in as: <span id="user-tag" class="text-purple-500 font-bold"></span>
-            </div>
-        </aside>
+    <header class="h-16 flex items-center px-6 border-b dark:border-slate-800 z-10 bg-white dark:bg-slate-900">
+        <img src="logo.png" class="w-8 h-8 mr-3" onerror="this.src='./logo.png';">
+        <div class="font-bold text-purple-600">Rite GPT</div>
+    </header>
 
-        <main class="flex-1 flex flex-col h-full overflow-hidden">
-            <header class="h-16 flex items-center justify-between px-6 border-b dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span class="text-sm font-bold tracking-widest uppercase opacity-50">Model: DeepSeek-R1</span>
-                </div>
-                <button onclick="location.reload()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-power-off"></i></button>
-            </header>
+    <div id="messages">
+        <div id="scroll-anchor"></div>
+    </div>
 
-            <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-6 pb-40">
-                <div class="flex justify-start">
-                    <div class="msg-ai p-4 shadow-sm max-w-[85%]">
-                        Hello! I am Rite GPT. How can I assist your workflow today?
-                    </div>
-                </div>
-            </div>
-
-            <div class="absolute bottom-0 w-full p-6">
-                <div class="max-w-4xl mx-auto flex gap-3 items-end bg-white dark:bg-zinc-900 p-3 rounded-[2rem] shadow-2xl border border-slate-200 dark:border-zinc-800">
-                    <textarea id="input" rows="1" placeholder="Describe your request..." 
-                        class="flex-1 bg-transparent p-3 outline-none resize-none text-base max-h-40"></textarea>
-                    <button id="send" class="h-12 w-12 flex items-center justify-center bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-all">
-                        <i class="fa-solid fa-arrow-up text-xl"></i>
-                    </button>
-                </div>
-                <p class="text-[10px] text-center mt-3 text-slate-400 uppercase tracking-tighter">Powered by Rite Intelligence & OpenRouter</p>
-            </div>
-        </main>
+    <div id="input-area">
+        <div class="max-w-4xl mx-auto flex gap-2">
+            <textarea id="chat-input" rows="1" placeholder="Send a message..." class="flex-1 bg-slate-100 dark:bg-slate-800 p-4 rounded-xl outline-none resize-none"></textarea>
+            <button id="send-btn" class="w-14 h-14 bg-purple-600 text-white rounded-xl flex items-center justify-center hover:bg-purple-700">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
     </div>
 
     <script>
         const API_KEY = "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";
-        const input = document.getElementById('input');
-        const sendBtn = document.getElementById('send');
         const messagesDiv = document.getElementById('messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const scrollAnchor = document.getElementById('scroll-anchor');
 
-        // Initializer
-        window.onload = () => {
-            document.getElementById('loading').style.display = 'none';
-            // Check if logo exists, if not show text watermark
-            const img = document.getElementById('bg-watermark');
-            img.onerror = () => {
-                document.getElementById('bg-text').classList.remove('hidden');
-            };
-        };
-
-        // Auth Logic
-        document.getElementById('login-form').onsubmit = (e) => {
-            e.preventDefault();
-            const user = document.getElementById('email').value;
-            enterApp(user);
-        };
-
-        document.getElementById('guest-btn').onclick = () => enterApp("Guest");
-
-        function enterApp(user) {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-            document.getElementById('user-tag').innerText = user;
+        function login() {
+            document.getElementById('auth-screen').style.display = 'none';
         }
 
-        // Chat Logic
-        sendBtn.onclick = async () => {
-            const text = input.value.trim();
-            if(!text) return;
-            
-            input.value = '';
-            appendMsg('user', text);
-            
-            const aiMsgBox = appendMsg('ai', '<i class="fa-solid fa-circle-notch animate-spin"></i> Processing...');
+        async function handleSend() {
+            const content = chatInput.value.trim();
+            if (!content) return;
 
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+
+            // User Message
+            addMessage('user', content);
+
+            // AI Loading state
+            const aiMsg = addMessage('ai', 'Thinking...');
+            
             try {
-                const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: {
                         "Authorization": `Bearer ${API_KEY}`,
@@ -174,36 +114,52 @@
                     },
                     body: JSON.stringify({
                         model: "deepseek/deepseek-r1:free",
-                        messages: [{role: "user", content: text}]
+                        messages: [{ role: "user", content: content }]
                     })
                 });
-                const data = await res.json();
-                const responseText = data.choices[0].message.content;
-                aiMsgBox.innerHTML = DOMPurify.sanitize(marked.parse(responseText));
-            } catch (err) {
-                aiMsgBox.innerText = "Connection lost. Please check your API status.";
-            }
-        };
 
-        function appendMsg(role, content) {
-            const wrapper = document.createElement('div');
-            wrapper.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
-            
-            const msg = document.createElement('div');
-            msg.className = `p-4 shadow-sm max-w-[85%] transition-all ${role === 'user' ? 'msg-user' : 'msg-ai'}`;
-            msg.innerHTML = content;
-            
-            wrapper.appendChild(msg);
-            messagesDiv.appendChild(wrapper);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            return msg;
+                const data = await response.json();
+                const reply = data.choices[0].message.content;
+                aiMsg.innerHTML = DOMPurify.sanitize(marked.parse(reply));
+                
+                // Final scroll after content loads
+                scrollToBottom();
+
+            } catch (err) {
+                aiMsg.innerText = "Error: Could not reach the AI.";
+            }
         }
 
-        // Auto-expand textarea
-        input.addEventListener('input', function() {
+        function addMessage(role, text) {
+            const bubble = document.createElement('div');
+            bubble.className = `msg-bubble ${role === 'user' ? 'user-msg' : 'ai-msg'}`;
+            bubble.innerHTML = text;
+            
+            // Insert BEFORE the scroll anchor
+            messagesDiv.insertBefore(bubble, scrollAnchor);
+            
+            scrollToBottom();
+            return bubble;
+        }
+
+        function scrollToBottom() {
+            // Smoothly scroll the anchor into view
+            scrollAnchor.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            
+            // Backup scroll for mobile
+            setTimeout(() => {
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 100);
+        }
+
+        sendBtn.onclick = handleSend;
+        chatInput.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } };
+
+        // Auto-resize text area
+        chatInput.oninput = function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
-        });
+        };
     </script>
 </body>
 </html>
