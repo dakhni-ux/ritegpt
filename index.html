@@ -29,29 +29,29 @@
     </script>
 
     <style>
-        /* Mobile Keyboard Safety */
+        /* Mobile Layout Stability */
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
         
-        /* The Watermark Background */
+        /* The Logo Watermark */
         #chat-container::before {
             content: "";
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 300px;
-            height: 300px;
+            width: 350px;
+            height: 350px;
             background-image: url('https://i.postimg.cc/mD8mLRm2/rite-gpt.png');
             background-repeat: no-repeat;
             background-position: center;
             background-size: contain;
-            opacity: 0.04; /* Very light watermark */
+            opacity: 0.05; 
             pointer-events: none;
             z-index: 0;
         }
-        .dark #chat-container::before { opacity: 0.07; filter: grayscale(1) invert(1); }
+        .dark #chat-container::before { opacity: 0.08; filter: grayscale(1) invert(1); }
 
-        /* Typography & Logo */
+        /* RiteGPT Branding Colors */
         .brand-text {
             background: linear-gradient(to right, #9333ea, #db2777);
             -webkit-background-clip: text;
@@ -60,11 +60,11 @@
         }
 
         /* Markdown Styles */
-        .markdown-body pre { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1rem 0; }
-        .markdown-body code { font-family: monospace; background: rgba(147, 51, 234, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.9em; }
-        .markdown-body p { margin-bottom: 1rem; line-height: 1.6; }
+        .markdown-body pre { background: #1e1e1e; color: #d4d4d4; padding: 1.25rem; border-radius: 0.75rem; overflow-x: auto; margin: 1rem 0; border: 1px solid #334155; }
+        .markdown-body code { font-family: 'Fira Code', monospace; background: rgba(147, 51, 234, 0.1); padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.85em; }
+        .markdown-body p { margin-bottom: 1rem; line-height: 1.7; }
         
-        /* Scrollbars */
+        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
@@ -89,26 +89,26 @@
             <div class="text-center mb-8">
                 <img src="https://i.postimg.cc/mD8mLRm2/rite-gpt.png" class="w-16 mx-auto mb-4" alt="Logo">
                 <h1 class="text-2xl font-bold brand-text">RiteGPT</h1>
-                <p id="auth-title" class="text-slate-500 text-sm mt-1">Sign in to your account</p>
+                <p id="auth-title" class="text-slate-500 text-sm mt-1 font-medium">Secure Access Portal</p>
             </div>
 
             <form id="auth-form" onsubmit="auth.handleSubmit(event)" class="space-y-4">
-                <div id="email-group">
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Email Address</label>
-                    <input type="email" id="auth-email" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none transition-all">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Email</label>
+                    <input type="email" id="auth-email" required placeholder="name@example.com" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none transition-all">
                 </div>
-                <div id="pass-group">
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Password</label>
-                    <input type="password" id="auth-pass" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none transition-all">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Password</label>
+                    <input type="password" id="auth-pass" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none transition-all">
                 </div>
-                <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-purple-500/30">Continue</button>
+                <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-purple-500/30">Sign In</button>
             </form>
             
             <div class="mt-6 flex flex-col items-center gap-3 text-sm">
-                <button onclick="auth.toggleMode()" id="toggle-auth" class="text-purple-600 font-medium">Create an account</button>
+                <button onclick="auth.toggleMode()" id="toggle-auth" class="text-purple-600 font-bold">Need an account? Sign Up</button>
                 <button onclick="auth.forgotPassword()" class="text-slate-400 italic">Forgot password?</button>
                 <div class="w-full h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
-                <button onclick="auth.loginGuest()" class="text-slate-600 dark:text-slate-300 font-bold hover:text-purple-500">Continue as Guest</button>
+                <button onclick="auth.loginGuest()" class="text-slate-700 dark:text-slate-300 font-extrabold hover:text-purple-600 transition-colors">Continue as Guest</button>
             </div>
         </div>
     </div>
@@ -121,107 +121,106 @@
                     <img src="https://i.postimg.cc/mD8mLRm2/rite-gpt.png" class="w-8" alt="Logo">
                     <span class="brand-text text-lg">RiteGPT</span>
                 </div>
-                <button onclick="ui.toggleSidebar()" class="md:hidden p-2"><i class="ph ph-x"></i></button>
+                <button onclick="ui.toggleSidebar()" class="md:hidden p-2 text-slate-500"><i class="ph ph-x text-xl"></i></button>
             </div>
 
             <div class="p-4">
-                <button onclick="app.newChat()" class="w-full flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm font-medium">
-                    <i class="ph ph-plus-circle text-purple-500 text-lg"></i>
-                    New Chat
+                <button onclick="app.newChat()" class="w-full flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:shadow-md transition-all text-sm font-bold">
+                    <i class="ph ph-plus-circle text-purple-600 text-xl"></i>
+                    New Conversation
                 </button>
             </div>
 
             <div id="chat-list" class="flex-1 overflow-y-auto custom-scrollbar px-3 space-y-1"></div>
 
             <div class="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                <div id="admin-badge" class="hidden px-3 py-1 bg-purple-100 text-purple-700 text-[10px] font-bold rounded-full uppercase tracking-tighter w-max mb-2">Admin Panel Active</div>
-                <div id="user-info" class="flex items-center gap-3 px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4">
-                    <div class="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs font-bold" id="user-initial">G</div>
-                    <div class="flex-1 truncate text-xs font-medium" id="user-display">Guest User</div>
+                <div id="admin-indicator" class="hidden px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-black rounded-full uppercase tracking-widest w-full text-center mb-2">Administrator Mode</div>
+                
+                <div class="flex items-center gap-3 px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold" id="user-initial">?</div>
+                    <div class="flex-1 truncate text-[11px] font-bold text-slate-500" id="user-display">User</div>
                 </div>
-                <button onclick="app.openSettings()" id="settings-btn" class="hidden flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
-                    <i class="ph ph-gear-six text-lg"></i> Settings
+
+                <button onclick="app.openSettings()" id="settings-btn" class="hidden flex items-center gap-3 w-full px-3 py-2 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all">
+                    <i class="ph ph-gear-six text-lg"></i> API Settings
                 </button>
-                <button onclick="ui.toggleTheme()" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
+                <button onclick="ui.toggleTheme()" class="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all">
                     <i class="ph ph-moon text-lg dark:hidden"></i>
                     <i class="ph ph-sun text-lg hidden dark:block"></i>
-                    Theme
+                    Switch Theme
                 </button>
-                <button onclick="auth.logout()" class="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all">
-                    <i class="ph ph-sign-out text-lg"></i> Logout
+                <button onclick="auth.logout()" class="flex items-center gap-3 w-full px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all">
+                    <i class="ph ph-sign-out text-lg"></i> Log Out
                 </button>
             </div>
         </aside>
 
         <main class="flex-1 flex flex-col relative min-w-0 bg-white dark:bg-rite-dark">
             <header class="flex items-center justify-between p-4 md:px-8 bg-white/80 dark:bg-rite-dark/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-100 dark:border-slate-800">
-                <button onclick="ui.toggleSidebar()" class="md:hidden p-2 -ml-2"><i class="ph ph-list text-2xl"></i></button>
-                <div class="flex items-center gap-2">
-                    <span id="chat-title-display" class="font-bold text-slate-400 text-sm truncate max-w-[150px] md:max-w-xs">Untitled Chat</span>
-                </div>
-                <div class="w-10"></div>
+                <button onclick="ui.toggleSidebar()" class="md:hidden p-2"><i class="ph ph-list text-2xl"></i></button>
+                <span id="chat-title-display" class="font-bold text-slate-400 text-xs uppercase tracking-widest truncate max-w-xs">New Chat</span>
+                <div class="w-8"></div>
             </header>
 
             <div id="chat-container" class="flex-1 overflow-y-auto custom-scrollbar relative">
-                <div id="messages" class="max-w-3xl mx-auto p-4 md:p-8 space-y-8 pb-32">
+                <div id="messages" class="max-w-3xl mx-auto p-4 md:p-8 space-y-8 pb-40">
                     </div>
             </div>
 
-            <div class="absolute bottom-0 left-0 right-0 p-4 md:p-8 bg-gradient-to-t from-white via-white to-transparent dark:from-rite-dark dark:via-rite-dark">
-                <div class="max-w-3xl mx-auto relative group">
-                    <div id="input-container" class="flex items-end gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-3xl border-2 border-transparent focus-within:border-purple-500/50 transition-all shadow-xl">
-                        <textarea id="user-input" rows="1" placeholder="Ask RiteGPT anything..." 
+            <div class="absolute bottom-0 left-0 right-0 p-4 md:p-8 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-rite-dark dark:via-rite-dark/90">
+                <div class="max-w-3xl mx-auto relative">
+                    <div id="input-container" class="flex items-end gap-2 p-2 bg-slate-100 dark:bg-slate-800/50 backdrop-blur rounded-3xl border-2 border-transparent focus-within:border-purple-500/50 transition-all shadow-2xl">
+                        <textarea id="user-input" rows="1" placeholder="Type a message to RiteGPT..." 
                             class="flex-1 bg-transparent border-none focus:ring-0 px-4 py-3 resize-none max-h-40 custom-scrollbar text-sm md:text-base"></textarea>
-                        <button id="send-btn" onclick="app.send()" class="p-3 bg-purple-600 text-white rounded-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                        <button id="send-btn" onclick="app.send()" class="p-3 bg-purple-600 text-white rounded-2xl hover:bg-purple-700 transition-all disabled:opacity-30">
                             <i class="ph ph-paper-plane-right-fill text-xl"></i>
                         </button>
                     </div>
-                    <p class="text-[10px] text-center mt-3 text-slate-400 uppercase tracking-widest font-bold">Powered by RiteGPT Pro Architecture</p>
                 </div>
             </div>
         </main>
     </div>
 
     <div id="settings-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden p-4">
-        <div class="w-full max-w-lg bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-2xl animate-fade-in">
-            <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i class="ph ph-sliders text-purple-500"></i> Admin Settings</h2>
+        <div class="w-full max-w-lg bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-2xl scale-95 transition-transform">
+            <h2 class="text-xl font-black mb-6 flex items-center gap-2"><i class="ph ph-key-return text-purple-600"></i> Global API Configuration</h2>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1">OpenRouter API Key</label>
-                    <input type="password" id="admin-key-input" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 transition-all outline-none">
+                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">OpenRouter Key</label>
+                    <input type="password" id="admin-key-input" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1">Model Name</label>
-                    <input type="text" id="admin-model-input" placeholder="deepseek/deepseek-r1:free" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 transition-all outline-none">
+                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">AI Model Path</label>
+                    <input type="text" id="admin-model-input" placeholder="deepseek/deepseek-r1:free" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1">System Prompt</label>
-                    <textarea id="admin-prompt-input" rows="4" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 transition-all outline-none resize-none"></textarea>
+                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Global System Personality</label>
+                    <textarea id="admin-prompt-input" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 border-none focus:ring-2 focus:ring-purple-500 outline-none resize-none"></textarea>
                 </div>
             </div>
             <div class="mt-8 flex gap-3">
-                <button onclick="app.closeSettings()" class="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all">Cancel</button>
-                <button onclick="app.saveSettings()" class="flex-1 py-3 font-bold bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-500/20 hover:bg-purple-700">Save Config</button>
+                <button onclick="app.closeSettings()" class="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl">Cancel</button>
+                <button onclick="app.saveSettings()" class="flex-1 py-3 text-sm font-bold bg-purple-600 text-white rounded-xl shadow-lg">Apply to All Users</button>
             </div>
         </div>
     </div>
 
     <script>
-        /** * RiteGPT - Core Application Logic
-         * Senior Frontend Engineer Implementation
+        /** * RiteGPT Core Engine
+         * Password: Kani@2211$
          */
 
-        const STORE_KEY = "ritegpt_config_v1";
-        const USERS_KEY = "ritegpt_users_v1";
         const ADMIN_EMAIL = "admin@ritegpt.pro";
+        const ADMIN_PASS = "Kani@2211$";
+        const STORE_KEY = "ritegpt_global_v2";
+        const USER_DB_KEY = "ritegpt_user_accounts";
 
-        // --- AUTH SYSTEM ---
         const auth = {
-            mode: 'login', // login | register
+            mode: 'login',
             currentUser: null,
 
             init() {
-                const session = sessionStorage.getItem('rite_session');
+                const session = sessionStorage.getItem('rite_session_v2');
                 if (session) {
                     this.currentUser = JSON.parse(session);
                     app.init();
@@ -233,57 +232,57 @@
 
             handleSubmit(e) {
                 e.preventDefault();
-                const email = document.getElementById('auth-email').value;
+                const email = document.getElementById('auth-email').value.toLowerCase();
                 const pass = document.getElementById('auth-pass').value;
-                const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+                const users = JSON.parse(localStorage.getItem(USER_DB_KEY) || '[]');
 
                 if (this.mode === 'login') {
-                    const user = users.find(u => u.email === email && u.pass === pass);
-                    // Default Admin Hardcode (if first run)
-                    if (email === ADMIN_EMAIL && pass === "admin123") {
+                    // Check Admin
+                    if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
                         this.login({ email, role: 'admin' });
-                    } else if (user) {
-                        this.login(user);
                     } else {
-                        alert("Invalid credentials.");
+                        const user = users.find(u => u.email === email && u.pass === pass);
+                        if (user) this.login(user);
+                        else alert("Access Denied: Invalid Credentials");
                     }
                 } else {
-                    if (users.find(u => u.email === email)) return alert("User exists.");
-                    const newUser = { email, pass, role: 'user', chats: [] };
+                    if (email === ADMIN_EMAIL) return alert("Unauthorized email identifier.");
+                    if (users.find(u => u.email === email)) return alert("Account already exists.");
+                    
+                    const newUser = { email, pass, role: 'user' };
                     users.push(newUser);
-                    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+                    localStorage.setItem(USER_DB_KEY, JSON.stringify(users));
                     this.login(newUser);
                 }
             },
 
             login(user) {
                 this.currentUser = user;
-                sessionStorage.setItem('rite_session', JSON.stringify(user));
+                sessionStorage.setItem('rite_session_v2', JSON.stringify(user));
                 document.getElementById('auth-screen').classList.add('hidden');
                 app.init();
             },
 
             loginGuest() {
-                this.login({ email: 'Guest', role: 'guest' });
+                this.login({ email: 'Guest Account', role: 'guest' });
             },
 
             logout() {
-                sessionStorage.removeItem('rite_session');
+                sessionStorage.removeItem('rite_session_v2');
                 location.reload();
             },
 
             toggleMode() {
                 this.mode = this.mode === 'login' ? 'register' : 'login';
-                document.getElementById('auth-title').innerText = this.mode === 'login' ? 'Sign in to your account' : 'Create a new account';
-                document.getElementById('toggle-auth').innerText = this.mode === 'login' ? 'Create an account' : 'Already have an account?';
+                document.getElementById('auth-title').innerText = this.mode === 'login' ? 'Secure Access Portal' : 'Register New Account';
+                document.getElementById('toggle-auth').innerText = this.mode === 'login' ? 'Need an account? Sign Up' : 'Already have an account? Sign In';
             },
 
             forgotPassword() {
-                alert("Demo Version: Password reset link sent to the abyss. Contact admin@ritegpt.pro.");
+                alert("Password recovery is managed by your organization's admin.");
             }
         };
 
-        // --- CHAT APP ---
         const app = {
             config: {
                 apiKey: '',
@@ -292,19 +291,18 @@
             },
             chats: [],
             currentChatId: null,
+            isGenerating: false,
 
             init() {
-                // Load global admin settings
+                // Load shared API config
                 const savedConfig = localStorage.getItem(STORE_KEY);
                 if (savedConfig) this.config = JSON.parse(savedConfig);
 
-                // Load user chats
+                // Load private chats
                 if (auth.currentUser.role !== 'guest') {
-                    const allUserData = JSON.parse(localStorage.getItem(`rite_chats_${auth.currentUser.email}`) || '[]');
-                    this.chats = allUserData;
+                    this.chats = JSON.parse(localStorage.getItem(`chats_${auth.currentUser.email}`) || '[]');
                 }
 
-                // UI setup
                 document.getElementById('app').classList.remove('hidden');
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('user-display').innerText = auth.currentUser.email;
@@ -312,13 +310,13 @@
                 
                 if (auth.currentUser.role === 'admin') {
                     document.getElementById('settings-btn').classList.remove('hidden');
-                    document.getElementById('admin-badge').classList.remove('hidden');
+                    document.getElementById('admin-indicator').classList.remove('hidden');
                 }
 
                 this.renderChatList();
                 this.newChat();
 
-                // Auto-resize textarea
+                // Input handling
                 const tx = document.getElementById('user-input');
                 tx.addEventListener("input", function() {
                     this.style.height = "auto";
@@ -329,7 +327,7 @@
             newChat() {
                 this.currentChatId = Date.now();
                 this.renderMessages([]);
-                document.getElementById('chat-title-display').innerText = "Untitled Chat";
+                document.getElementById('chat-title-display').innerText = "New Conversation";
             },
 
             renderChatList() {
@@ -337,11 +335,11 @@
                 list.innerHTML = '';
                 this.chats.slice().reverse().forEach(chat => {
                     const div = document.createElement('div');
-                    div.className = `flex items-center gap-2 p-3 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-sm group ${this.currentChatId === chat.id ? 'bg-slate-100 dark:bg-slate-800 border-l-4 border-purple-500' : ''}`;
+                    div.className = `flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-xs font-bold group ${this.currentChatId === chat.id ? 'bg-slate-100 dark:bg-slate-800 text-purple-600 border-l-4 border-purple-600' : 'text-slate-400'}`;
                     div.innerHTML = `
-                        <i class="ph ph-chat-centered-text"></i>
+                        <i class="ph ph-chat-text text-lg"></i>
                         <span class="flex-1 truncate">${chat.title}</span>
-                        <button onclick="event.stopPropagation(); app.deleteChat(${chat.id})" class="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500"><i class="ph ph-trash"></i></button>
+                        <button onclick="event.stopPropagation(); app.deleteChat(${chat.id})" class="opacity-0 group-hover:opacity-100 hover:text-red-500"><i class="ph ph-trash"></i></button>
                     `;
                     div.onclick = () => this.loadChat(chat.id);
                     list.appendChild(div);
@@ -368,36 +366,34 @@
             renderMessages(msgs) {
                 const container = document.getElementById('messages');
                 container.innerHTML = '';
-                
                 if (msgs.length === 0) {
                     container.innerHTML = `
-                        <div class="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
-                            <img src="https://i.postimg.cc/mD8mLRm2/rite-gpt.png" class="w-20 opacity-20 mb-6 grayscale" alt="Logo">
-                            <h2 class="text-3xl font-extrabold text-slate-200 dark:text-slate-700">How can I help you today?</h2>
+                        <div class="flex flex-col items-center justify-center py-24 text-center">
+                            <img src="https://i.postimg.cc/mD8mLRm2/rite-gpt.png" class="w-24 opacity-10 mb-8 grayscale" alt="Watermark">
+                            <h2 class="text-3xl font-black text-slate-100 dark:text-slate-800/50">RITE GPT</h2>
                         </div>
                     `;
                     return;
                 }
-
                 msgs.forEach(m => this.appendMessage(m.role, m.content));
             },
 
             appendMessage(role, content) {
                 const container = document.getElementById('messages');
-                const welcome = container.querySelector('div[class*="py-20"]');
-                if (welcome) welcome.remove();
+                const empty = container.querySelector('div[class*="py-24"]');
+                if (empty) empty.remove();
 
                 const div = document.createElement('div');
                 div.className = `flex gap-4 ${role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`;
                 
                 const html = role === 'user' 
-                    ? `<div class="bg-purple-600 text-white px-5 py-3 rounded-2xl rounded-tr-none max-w-[85%] shadow-md text-sm md:text-base">${this.escape(content)}</div>`
+                    ? `<div class="bg-purple-600 text-white px-5 py-3 rounded-2xl rounded-tr-none max-w-[85%] shadow-xl text-sm font-medium">${this.escape(content)}</div>`
                     : `<div class="w-full">
-                        <div class="flex items-center gap-2 mb-2">
+                        <div class="flex items-center gap-2 mb-3">
                              <img src="https://i.postimg.cc/mD8mLRm2/rite-gpt.png" class="w-5" alt="Logo">
-                             <span class="text-xs font-bold uppercase tracking-widest text-purple-500">RiteGPT Assistant</span>
+                             <span class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-600">RiteGPT AI</span>
                         </div>
-                        <div class="markdown-body text-slate-700 dark:text-slate-200 text-sm md:text-base leading-relaxed pl-7">${DOMPurify.sanitize(marked.parse(content))}</div>
+                        <div class="markdown-body text-slate-700 dark:text-slate-300 text-sm md:text-base leading-relaxed pl-7">${DOMPurify.sanitize(marked.parse(content))}</div>
                        </div>`;
                 
                 div.innerHTML = html;
@@ -408,23 +404,20 @@
 
             async send() {
                 const input = document.getElementById('user-input');
-                const btn = document.getElementById('send-btn');
                 const content = input.value.trim();
-                
                 if (!content || this.isGenerating) return;
-                if (!this.config.apiKey) return alert("Admin has not configured the API key yet.");
+                
+                if (!this.config.apiKey) return alert("System Offline: API configuration missing. Contact Administrator.");
 
                 this.isGenerating = true;
                 input.value = '';
                 input.style.height = "auto";
-                btn.disabled = true;
+                document.getElementById('send-btn').disabled = true;
 
-                // Add to memory
-                const activeChat = this.getOrCreateChat();
-                activeChat.messages.push({ role: 'user', content });
+                const chat = this.getOrCreateChat();
+                chat.messages.push({ role: 'user', content });
                 this.appendMessage('user', content);
 
-                // Placeholder for AI
                 const aiDiv = this.appendMessage('assistant', '<span class="cursor-blink"></span>');
                 const aiTarget = aiDiv.querySelector('.markdown-body');
                 let fullText = "";
@@ -435,14 +428,11 @@
                         headers: {
                             "Authorization": `Bearer ${this.config.apiKey}`,
                             "Content-Type": "application/json",
-                            "X-Title": "RiteGPT"
+                            "X-Title": "RiteGPT Pro"
                         },
                         body: JSON.stringify({
                             model: this.config.model,
-                            messages: [
-                                { role: "system", content: this.config.systemPrompt },
-                                ...activeChat.messages
-                            ],
+                            messages: [{ role: "system", content: this.config.systemPrompt }, ...chat.messages],
                             stream: true
                         })
                     });
@@ -455,39 +445,36 @@
                         if (done) break;
                         
                         const chunk = decoder.decode(value);
-                        const lines = chunk.split('\n');
-                        
-                        for (const line of lines) {
+                        chunk.split('\n').forEach(line => {
                             if (line.startsWith('data: ')) {
                                 try {
                                     const data = JSON.parse(line.slice(6));
-                                    const token = data.choices[0]?.delta?.content || "";
-                                    fullText += token;
+                                    fullText += data.choices[0]?.delta?.content || "";
                                     aiTarget.innerHTML = DOMPurify.sanitize(marked.parse(fullText + '<span class="cursor-blink"></span>'));
                                     this.scroll();
                                 } catch (e) {}
                             }
-                        }
+                        });
                     }
                     
                     aiTarget.innerHTML = DOMPurify.sanitize(marked.parse(fullText));
-                    activeChat.messages.push({ role: 'assistant', content: fullText });
-                    if (activeChat.messages.length === 2) activeChat.title = content.substring(0, 30) + '...';
+                    chat.messages.push({ role: 'assistant', content: fullText });
+                    if (chat.title === 'New Conversation') chat.title = content.substring(0, 35);
                     this.saveToDisk();
                     this.renderChatList();
 
                 } catch (err) {
-                    aiTarget.innerHTML = `<span class="text-red-500 italic">Failed to communicate with RiteGPT engine.</span>`;
+                    aiTarget.innerHTML = `<span class="text-red-500 font-bold">Network Exception: Unable to reach AI node.</span>`;
                 } finally {
                     this.isGenerating = false;
-                    btn.disabled = false;
+                    document.getElementById('send-btn').disabled = false;
                 }
             },
 
             getOrCreateChat() {
                 let chat = this.chats.find(c => c.id === this.currentChatId);
                 if (!chat) {
-                    chat = { id: this.currentChatId, title: 'New Chat', messages: [] };
+                    chat = { id: this.currentChatId, title: 'New Conversation', messages: [] };
                     this.chats.push(chat);
                 }
                 return chat;
@@ -495,7 +482,7 @@
 
             saveToDisk() {
                 if (auth.currentUser.role === 'guest') return;
-                localStorage.setItem(`rite_chats_${auth.currentUser.email}`, JSON.stringify(this.chats));
+                localStorage.setItem(`chats_${auth.currentUser.email}`, JSON.stringify(this.chats));
             },
 
             scroll() {
@@ -524,7 +511,7 @@
                 this.config.systemPrompt = document.getElementById('admin-prompt-input').value.trim();
                 localStorage.setItem(STORE_KEY, JSON.stringify(this.config));
                 this.closeSettings();
-                alert("Config Saved Globally.");
+                alert("Global Config Updated.");
             }
         };
 
@@ -538,13 +525,13 @@
             }
         };
 
-        // Initialize on load
+        // Initialize
         window.onload = () => {
             if (localStorage.getItem('rite_theme') === 'dark') document.documentElement.classList.add('dark');
             auth.init();
         };
 
-        // Handle Enter key
+        // Mobile Friendly Submit
         document.getElementById('user-input').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 768) {
                 e.preventDefault();
