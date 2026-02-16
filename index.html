@@ -12,141 +12,158 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* The Watermark Logic */
-        .watermark-overlay {
+        body { background-color: #ffffff; margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; font-family: sans-serif; }
+        .dark body { background-color: #0f172a; }
+
+        /* Centered Watermark */
+        .watermark-layer {
             position: fixed;
             inset: 0;
-            background-image: url('logo.png');
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: 40%;
-            opacity: 0.05; /* Light watermark */
-            pointer-events: none;
-            z-index: 0;
-        }
-        
-        #app, #auth-screen {
-            position: relative;
-            z-index: 10;
-            background: transparent;
-        }
-
-        body { background-color: #ffffff; overflow: hidden; }
-        .dark body { background-color: #131314; }
-
-        #loading {
-            position: fixed;
-            inset: 0;
-            z-index: 100;
-            background: white;
             display: flex;
             align-items: center;
             justify-content: center;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.05;
         }
+        .watermark-layer img { width: 350px; height: auto; }
+
+        /* Scroll Area Fixes */
+        #messages-container {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            z-index: 10;
+            scroll-behavior: smooth;
+        }
+
+        .bubble { max-width: 85%; padding: 1rem; border-radius: 1.25rem; margin-bottom: 1.5rem; line-height: 1.6; }
+        .user-bubble { background: #8b5cf6; color: white; align-self: flex-end; border-bottom-right-radius: 0; }
+        .ai-bubble { background: #f1f5f9; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 0; }
+        .dark .ai-bubble { background: #1e293b; color: #f1f5f9; }
+
+        #input-dock { padding: 1rem; background: transparent; z-index: 20; border-top: 1px solid #f1f5f9; }
+        .dark #input-dock { border-color: #1e293b; }
+        
+        #auth-overlay { position: fixed; inset: 0; z-index: 100; background: white; display: flex; align-items: center; justify-content: center; }
+        .dark #auth-overlay { background: #0f172a; }
     </style>
 </head>
-<body class="h-full text-slate-900 dark:text-slate-100">
+<body class="dark:text-white">
 
-    <div id="loading">
-        <p class="animate-pulse font-bold text-xl">Rite GPT...</p>
+    <div class="watermark-layer">
+        <img src="logo.png" alt="Rite GPT Watermark" onerror="this.src='./logo.png';">
     </div>
 
-    <div class="watermark-overlay"></div>
-
-    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 text-center">
-            <img src="logo.png" class="w-24 h-24 mx-auto mb-4" onerror="this.style.display='none'">
-            <h1 class="text-3xl font-bold mb-6">Rite GPT</h1>
-            <form id="login-form" class="space-y-4">
-                <input type="email" id="email" placeholder="Email (admin@ritegpt.pro)" required
-                    class="w-full p-4 rounded-xl border dark:bg-zinc-800 dark:border-zinc-700 outline-none focus:ring-2 focus:ring-purple-500">
-                <button type="submit" class="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all">
-                    Login / Enter Chat
+    <div id="auth-overlay">
+        <div class="max-w-md w-full p-8 text-center">
+            <img src="logo.png" class="w-24 h-24 mx-auto mb-6" onerror="this.src='./logo.png';">
+            <h1 class="text-4xl font-black mb-2 tracking-tighter text-purple-600">RITE GPT</h1>
+            <p class="text-slate-400 mb-8 font-medium">Universal AI Interface</p>
+            
+            <form id="login-form" class="space-y-4 text-left">
+                <div>
+                    <label class="text-xs font-bold uppercase text-slate-500 ml-1">Email ID</label>
+                    <input type="email" id="auth-email" placeholder="name@example.com" required
+                        class="w-full p-4 mt-1 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500 transition-all">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-slate-500 ml-1">Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" required
+                        class="w-full p-4 mt-1 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500 transition-all">
+                </div>
+                <button type="submit" class="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl shadow-lg transition-transform active:scale-95">
+                    Sign In
                 </button>
             </form>
-            <button id="guest-btn" class="mt-4 text-slate-500 text-sm hover:underline">Or continue as Guest</button>
+
+            <button onclick="alert('Google Sign-In is currently in development for this repository.')" 
+                class="w-full mt-4 py-4 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-2 font-medium rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-5 h-5">
+                Continue with Google
+            </button>
+            
+            <div class="mt-8 flex flex-col gap-3">
+                <button id="guest-btn" class="text-slate-400 text-sm hover:text-purple-600">Continue as Guest</button>
+                <button id="forgot-btn" class="text-purple-600 text-sm font-semibold hover:underline">Forgot Password?</button>
+            </div>
         </div>
     </div>
 
-    <div id="app" class="hidden h-full flex flex-col md:flex-row">
-        <aside id="sidebar" class="w-72 bg-slate-50 dark:bg-zinc-900 border-r dark:border-zinc-800 flex-col hidden md:flex">
-            <div class="p-4 flex items-center gap-3 border-b dark:border-zinc-800">
-                <img src="logo.png" class="w-8 h-8">
-                <span class="font-bold">Rite GPT</span>
-            </div>
-            <div id="chat-list" class="flex-1 overflow-y-auto p-2 space-y-1">
-                </div>
-        </aside>
+    <header class="h-16 flex items-center justify-between px-6 border-b dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-30">
+        <div class="flex items-center gap-2">
+            <img src="logo.png" class="w-8 h-8" onerror="this.src='./logo.png';">
+            <span class="font-bold text-xl text-purple-600">Rite GPT</span>
+        </div>
+        <button onclick="location.reload()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-power-off"></i></button>
+    </header>
 
-        <main class="flex-1 flex flex-col h-full relative">
-            <header class="p-4 flex justify-between items-center border-b dark:border-zinc-800">
-                <button class="md:hidden" onclick="alert('Sidebar mobile toggle active')"><i class="fa-solid fa-bars"></i></button>
-                <div class="font-medium text-purple-600" id="model-name">deepseek-r1:free</div>
-                <div id="user-tag" class="text-xs opacity-50"></div>
-            </header>
+    <div id="messages-container">
+        <div class="bubble ai-bubble">
+            Hello! I am Rite GPT. My systems are initialized. How can I help you today?
+        </div>
+        <div id="scroll-anchor"></div>
+    </div>
 
-            <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-6 pb-32">
-                </div>
-
-            <div class="absolute bottom-0 w-full p-4 bg-gradient-to-t from-white dark:from-zinc-950">
-                <div class="max-w-3xl mx-auto flex gap-2 items-end bg-slate-100 dark:bg-zinc-800 p-2 rounded-2xl border dark:border-zinc-700">
-                    <textarea id="input" rows="1" placeholder="Type your message..." 
-                        class="flex-1 bg-transparent p-2 outline-none resize-none max-h-40"></textarea>
-                    <button id="send" class="p-3 bg-purple-600 text-white rounded-xl hover:scale-105 transition-transform">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </main>
+    <div id="input-dock">
+        <div class="max-w-4xl mx-auto flex gap-3 items-end bg-slate-100 dark:bg-slate-800 p-2 rounded-2xl">
+            <textarea id="chat-input" rows="1" placeholder="Type a message..." class="flex-1 bg-transparent p-3 outline-none resize-none"></textarea>
+            <button id="send-btn" class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center hover:scale-105 transition-transform">
+                <i class="fa-solid fa-arrow-up"></i>
+            </button>
+        </div>
+        <p class="text-[10px] text-center mt-2 text-slate-400 uppercase tracking-widest">Rite GPT v1.0 | OpenRouter Engine</p>
     </div>
 
     <script>
-        // --- LOGIC ---
-        const loginForm = document.getElementById('login-form');
-        const authScreen = document.getElementById('auth-screen');
-        const app = document.getElementById('app');
-        const sendBtn = document.getElementById('send');
-        const input = document.getElementById('input');
-        const messagesDiv = document.getElementById('messages');
-
-        // State
-        let user = localStorage.getItem('rite_user');
         const API_KEY = "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";
+        const ADMIN_EMAIL = "admin@ritegpt.pro";
+        const ADMIN_EMAIL_ALT = "admin@ritegpt.com";
+        const ADMIN_PASS = "Kani@2211$";
 
-        function init() {
-            document.getElementById('loading').style.display = 'none';
-            if (user) {
-                showApp();
-            }
-        }
+        const authOverlay = document.getElementById('auth-overlay');
+        const loginForm = document.getElementById('login-form');
+        const messagesDiv = document.getElementById('messages-container');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const scrollAnchor = document.getElementById('scroll-anchor');
 
-        function showApp() {
-            authScreen.classList.add('hidden');
-            app.classList.remove('hidden');
-            document.getElementById('user-tag').innerText = user;
-        }
-
+        // Authentication Logic
         loginForm.onsubmit = (e) => {
             e.preventDefault();
-            user = document.getElementById('email').value;
-            localStorage.setItem('rite_user', user);
-            showApp();
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+
+            if ((email === ADMIN_EMAIL || email === ADMIN_EMAIL_ALT) && pass === ADMIN_PASS) {
+                authOverlay.style.display = 'none';
+            } else if (email !== ADMIN_EMAIL && email !== ADMIN_EMAIL_ALT) {
+                // Allow non-admin login for testing
+                authOverlay.style.display = 'none';
+            } else {
+                alert("Incorrect Admin Password.");
+            }
         };
 
-        document.getElementById('guest-btn').onclick = () => {
-            user = "Guest User";
-            showApp();
+        document.getElementById('guest-btn').onclick = () => authOverlay.style.display = 'none';
+        
+        document.getElementById('forgot-btn').onclick = () => {
+            const email = document.getElementById('auth-email').value;
+            if(!email) { alert("Please enter your email address first."); return; }
+            alert(`A password reset link has been sent to ${email}`);
         };
 
-        // Simple Send Function
-        sendBtn.onclick = async () => {
-            const text = input.value.trim();
+        // Chat Logic
+        async function handleSend() {
+            const text = chatInput.value.trim();
             if(!text) return;
+
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
             
-            input.value = '';
-            appendMsg('user', text);
-            
-            const aiMsgDiv = appendMsg('ai', 'Thinking...');
+            appendMessage('user', text);
+            const aiBox = appendMessage('ai', '<i class="fa-solid fa-spinner animate-spin"></i> Thinking...');
 
             try {
                 const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -161,26 +178,37 @@
                     })
                 });
                 const data = await res.json();
-                aiMsgDiv.innerHTML = marked.parse(data.choices[0].message.content);
+                const reply = data.choices[0].message.content;
+                aiBox.innerHTML = DOMPurify.sanitize(marked.parse(reply));
             } catch (err) {
-                aiMsgDiv.innerText = "Error connecting to OpenRouter.";
+                aiBox.innerText = "Error: AI not responding. Check API key.";
+            } finally {
+                scrollToBottom();
             }
-        };
-
-        function appendMsg(role, text) {
-            const div = document.createElement('div');
-            div.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
-            div.innerHTML = `
-                <div class="${role === 'user' ? 'bg-purple-600 text-white' : 'bg-slate-200 dark:bg-zinc-800'} p-4 rounded-2xl max-w-[80%] shadow-sm">
-                    ${text}
-                </div>
-            `;
-            messagesDiv.appendChild(div);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            return div.querySelector('div');
         }
 
-        window.onload = init;
+        function appendMessage(role, content) {
+            const bubble = document.createElement('div');
+            bubble.className = `bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble'}`;
+            bubble.innerHTML = content;
+            messagesDiv.insertBefore(bubble, scrollAnchor);
+            scrollToBottom();
+            return bubble;
+        }
+
+        function scrollToBottom() {
+            scrollAnchor.scrollIntoView({ behavior: 'smooth' });
+            // Fail-safe scroll
+            setTimeout(() => { messagesDiv.scrollTop = messagesDiv.scrollHeight; }, 100);
+        }
+
+        sendBtn.onclick = handleSend;
+        chatInput.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } };
+        
+        chatInput.oninput = function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        };
     </script>
 </body>
 </html>
