@@ -15,96 +15,103 @@
     </script>
     <style>
         .brand-text { background: linear-gradient(135deg, #4285f4, #9b72f3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
-        body { transition: background 0.3s, color 0.3s; }
-        .dark body { background-color: #131314; color: #e3e3e3; }
         
-        /* Model Selection Pills */
+        /* Watermark Background */
+        #chat-flow {
+            position: relative;
+            background-image: url('logo.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 300px;
+            background-attachment: local;
+        }
+        .dark #chat-flow { background-blend-mode: overlay; background-color: rgba(19, 19, 20, 0.96); opacity: 1; }
+        #chat-flow::before {
+            content: ""; position: absolute; inset: 0; 
+            background: inherit; opacity: 0.05; pointer-events: none;
+        }
+
+        /* Model Selector Styling */
         .model-chip { 
-            padding: 8px 16px; 
-            border-radius: 12px; 
-            border: 1px solid #e5e7eb; 
-            font-size: 12px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            white-space: nowrap; 
-            transition: all 0.2s ease;
-            background: #fff;
-            color: #374151;
+            padding: 10px 20px; border-radius: 14px; border: 1.5px solid #e5e7eb; 
+            font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); background: white; color: #6b7280;
         }
         .dark .model-chip { background: #1e1f20; border-color: #3c4043; color: #9aa0a6; }
         
         .model-chip.active { 
-            background: #4285f4; 
-            color: white !important; 
-            border-color: #4285f4; 
-            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+            background: #4285f4 !important; color: white !important; 
+            border-color: #4285f4 !important; transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
         }
 
-        .chat-bubble { max-width: 85%; padding: 14px 18px; border-radius: 20px; margin-bottom: 12px; line-height: 1.6; }
+        .chat-bubble { max-width: 85%; padding: 14px 18px; border-radius: 20px; margin-bottom: 15px; position: relative; z-index: 10; }
         .user-bubble { background: #f0f4f9; align-self: flex-end; color: #1f1f1f; }
         .dark .user-bubble { background: #2f2f2f; color: #e3e3e3; }
-        .ai-bubble { align-self: flex-start; background: transparent; }
+        .ai-bubble { align-self: flex-start; }
 
-        #auth-overlay { position: fixed; inset: 0; background: inherit; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        #auth-overlay { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .dark #auth-overlay { background: #131314; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="flex h-full overflow-hidden">
+<body class="flex h-full overflow-hidden dark:bg-[#131314] bg-white text-slate-900 dark:text-slate-100">
 
     <div id="auth-overlay">
-        <div class="w-full max-w-sm p-8 text-center bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border dark:border-zinc-800">
+        <div class="w-full max-w-sm p-8 text-center">
+            <img src="logo.png" class="w-20 h-20 mx-auto mb-6">
             <h1 class="text-4xl brand-text mb-8">RiteGPT</h1>
             <form id="auth-form" class="space-y-4">
                 <input type="email" id="auth-email" placeholder="Email" required class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none">
                 <input type="password" id="auth-pass" placeholder="Password" required class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none">
-                <button type="submit" id="auth-btn" class="w-full py-4 bg-zinc-900 dark:bg-zinc-100 dark:text-black text-white font-bold rounded-2xl hover:opacity-90 transition-opacity">Sign In</button>
+                <button type="submit" id="auth-btn" class="w-full py-4 bg-black dark:bg-white dark:text-black text-white font-bold rounded-2xl">Sign In</button>
             </form>
-            <p class="mt-6 text-sm opacity-60">Need an account? <button onclick="toggleAuthMode()" class="text-blue-500 font-bold" id="auth-toggle-text">Sign Up</button></p>
+            <button onclick="toggleAuthMode()" class="mt-6 text-sm font-bold text-blue-500" id="auth-toggle-text">New account? Sign Up</button>
         </div>
     </div>
 
     <aside class="w-64 bg-[#f0f4f9] dark:bg-[#1e1f20] flex flex-col border-r dark:border-zinc-800 hidden md:flex">
         <div class="p-4"><button onclick="location.reload()" class="w-full py-3 bg-white dark:bg-zinc-800 rounded-xl text-sm font-bold shadow-sm">+ New Chat</button></div>
-        <div id="history-list" class="flex-1 overflow-y-auto px-3 space-y-1 text-xs opacity-60"></div>
+        <div id="history-list" class="flex-1 overflow-y-auto px-4 space-y-2 py-4"></div>
         <div class="p-4 border-t dark:border-zinc-800 space-y-2">
-            <button onclick="toggleTheme()" class="w-full text-left p-2 text-[10px] font-bold uppercase hover:bg-black/5 dark:hover:bg-white/5 rounded"><i class="fa-solid fa-moon mr-2"></i> Theme</button>
-            <button id="admin-panel-btn" onclick="document.getElementById('admin-modal').classList.remove('hidden')" class="hidden w-full text-left p-2 text-[10px] text-purple-500 font-bold uppercase hover:bg-black/5 dark:hover:bg-white/5 rounded"><i class="fa-solid fa-crown mr-2"></i> Admin</button>
+            <button onclick="toggleTheme()" class="w-full text-left p-2 text-[10px] font-bold uppercase hover:bg-black/5 dark:hover:bg-white/5 rounded"><i class="fa-solid fa-circle-half-stroke mr-2"></i> Mode</button>
+            <button id="admin-panel-btn" onclick="document.getElementById('admin-modal').classList.remove('hidden')" class="hidden w-full text-left p-2 text-[10px] text-purple-500 font-bold uppercase hover:bg-black/5 dark:hover:bg-white/5 rounded"><i class="fa-solid fa-gear mr-2"></i> Admin</button>
             <button onclick="signOut()" class="w-full text-left p-2 text-[10px] text-zinc-500 font-bold uppercase hover:text-red-500"><i class="fa-solid fa-power-off mr-2"></i> Logout</button>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col min-w-0">
-        <header class="h-14 flex items-center px-6 border-b dark:border-zinc-800 justify-between">
-            <span class="brand-text text-xl">RiteGPT</span>
-            <div id="current-model-display" class="text-[10px] font-black bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full uppercase tracking-tighter"></div>
+        <header class="h-16 flex items-center px-6 border-b dark:border-zinc-800 justify-between">
+            <div class="flex items-center gap-3">
+                <img src="logo.png" class="w-8 h-8">
+                <span class="brand-text text-xl">RiteGPT</span>
+            </div>
+            <div id="model-badge" class="text-[9px] font-black bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full uppercase tracking-widest border border-blue-500/20"></div>
         </header>
 
         <div id="chat-flow" class="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col">
             <div id="chat-render" class="max-w-3xl mx-auto w-full flex flex-col"></div>
         </div>
         
-        <div class="p-4">
+        <div class="p-4 md:pb-10">
             <div class="max-w-3xl mx-auto">
-                <div id="model-selector" class="flex gap-2 mb-4 overflow-x-auto no-scrollbar py-1">
-                    </div>
-
-                <div class="relative bg-zinc-100 dark:bg-zinc-800/50 border border-transparent dark:border-zinc-700 rounded-3xl flex items-end p-2 focus-within:border-blue-500/50 transition-all">
-                    <textarea id="chat-input" rows="1" placeholder="Ask anything..." class="w-full bg-transparent p-4 outline-none resize-none text-sm"></textarea>
-                    <button id="send-btn" class="p-4 text-blue-500 hover:scale-110 transition-transform"><i class="fa-solid fa-paper-plane text-xl"></i></button>
+                <div id="model-selector" class="flex gap-2 mb-4 overflow-x-auto no-scrollbar py-2"></div>
+                <div class="relative bg-zinc-100 dark:bg-zinc-800/80 border border-transparent dark:border-zinc-700 rounded-[28px] flex items-end p-2 focus-within:ring-2 ring-blue-500/20 transition-all">
+                    <textarea id="chat-input" rows="1" placeholder="Message RiteGPT..." class="w-full bg-transparent p-4 outline-none resize-none text-sm"></textarea>
+                    <button id="send-btn" class="p-4 text-blue-500 hover:scale-110 transition-all"><i class="fa-solid fa-arrow-up-long text-xl"></i></button>
                 </div>
-                <p class="text-[9px] text-center opacity-40 mt-3 uppercase tracking-widest font-bold">Powered by RiteGPT Universal AI</p>
             </div>
         </div>
     </main>
 
-    <div id="admin-modal" class="fixed inset-0 bg-black/80 z-[200] hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-zinc-900 p-8 rounded-3xl w-full max-w-sm border dark:border-zinc-800">
-            <h2 class="text-xl font-bold mb-6">System Configuration</h2>
-            <input type="password" id="adm-key" placeholder="OpenRouter API Key" class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none mb-3 outline-none">
+    <div id="admin-modal" class="fixed inset-0 bg-black/80 z-[2000] hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-zinc-900 p-8 rounded-3xl w-full max-w-sm">
+            <h2 class="text-xl font-bold mb-6">System Config</h2>
+            <input type="password" id="adm-key" placeholder="API Key" class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none mb-3 outline-none">
             <textarea id="adm-models" placeholder="Model IDs (comma separated)" class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none mb-6 h-32 outline-none text-xs"></textarea>
             <div class="flex gap-2">
                 <button onclick="saveConfig()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-bold">Save</button>
-                <button onclick="document.getElementById('admin-modal').classList.add('hidden')" class="flex-1 py-4 bg-zinc-200 dark:bg-zinc-800 rounded-2xl font-bold">Cancel</button>
+                <button onclick="document.getElementById('admin-modal').classList.add('hidden')" class="flex-1 py-4 bg-zinc-100 dark:bg-zinc-800 rounded-2xl font-bold">Close</button>
             </div>
         </div>
     </div>
@@ -123,6 +130,7 @@
                 document.getElementById('auth-overlay').style.display = 'none';
                 if(state.user.email === "admin@ritegpt.pro") document.getElementById('admin-panel-btn').classList.remove('hidden');
                 await loadConfig();
+                await loadHistory();
             }
         }
 
@@ -131,7 +139,7 @@
             if(data) {
                 state.key = data.api_key;
                 state.models = data.model_name.split(',').map(m => m.trim());
-                state.activeModel = state.models[0]; // Set first model as default
+                state.activeModel = state.models[0];
                 renderModelChips();
                 document.getElementById('adm-key').value = data.api_key;
                 document.getElementById('adm-models').value = data.model_name;
@@ -141,42 +149,37 @@
         function renderModelChips() {
             const container = document.getElementById('model-selector');
             container.innerHTML = '';
-            state.models.forEach(modelId => {
+            state.models.forEach(mid => {
                 const chip = document.createElement('div');
-                const displayName = modelId.split('/').pop().replace(':free','').toUpperCase();
-                
-                chip.className = `model-chip ${modelId === state.activeModel ? 'active' : ''}`;
-                chip.innerText = displayName;
-                
+                const name = mid.split('/').pop().replace(':free','').toUpperCase();
+                chip.className = `model-chip ${mid === state.activeModel ? 'active' : ''}`;
+                chip.innerText = name;
                 chip.onclick = () => {
-                    state.activeModel = modelId; // Update the actual model ID used for API
-                    renderModelChips(); // Re-render UI to show active state
-                    document.getElementById('current-model-display').innerText = displayName;
+                    state.activeModel = mid;
+                    renderModelChips();
+                    document.getElementById('model-badge').innerText = name;
                 };
                 container.appendChild(chip);
             });
-            document.getElementById('current-model-display').innerText = state.activeModel.split('/').pop().replace(':free','').toUpperCase();
+            document.getElementById('model-badge').innerText = state.activeModel.split('/').pop().replace(':free','').toUpperCase();
         }
 
         async function runChat() {
             const input = document.getElementById('chat-input');
             const prompt = input.value.trim(); if(!prompt) return;
             input.value = ''; addBubble('user', prompt);
-            const ai = addBubble('ai', '<i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i>');
+            const ai = addBubble('ai', '<i class="fa-solid fa-spinner fa-spin"></i>');
             
             try {
                 const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${state.key}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        model: state.activeModel, 
-                        messages: [{role: "user", content: prompt}] 
-                    })
+                    body: JSON.stringify({ model: state.activeModel, messages: [{role: "user", content: prompt}] })
                 });
                 const d = await res.json();
                 ai.innerHTML = marked.parse(d.choices[0].message.content);
                 await _sb.from('messages').insert([{ user_id: state.user.id, role: 'user', content: prompt }, { user_id: state.user.id, role: 'assistant', content: d.choices[0].message.content }]);
-            } catch (e) { ai.innerText = "Connection error. Please try again."; }
+            } catch (e) { ai.innerText = "Error. Check Admin Config."; }
         }
 
         function addBubble(role, text) {
@@ -186,6 +189,19 @@
             document.getElementById('chat-render').appendChild(div);
             document.getElementById('chat-flow').scrollTo(0, 99999);
             return div;
+        }
+
+        async function loadHistory() {
+            const { data } = await _sb.from('messages').select('*').eq('user_id', state.user.id).order('created_at', { ascending: false });
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            const unique = [...new Map(data.filter(m => m.role === 'user').map(x => [x.content.substring(0,30), x])).values()];
+            unique.forEach(item => {
+                const d = document.createElement('div');
+                d.className = "p-3 text-[11px] hover:bg-black/5 dark:hover:bg-white/5 rounded-xl cursor-pointer truncate opacity-70 hover:opacity-100 transition-all";
+                d.innerHTML = `<i class="fa-regular fa-message mr-2"></i> ${item.content}`;
+                list.appendChild(d);
+            });
         }
 
         function toggleTheme() {
