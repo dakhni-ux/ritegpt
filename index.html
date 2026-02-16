@@ -8,6 +8,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -15,36 +16,36 @@
         body { background-color: #ffffff; height: 100vh; overflow: hidden; font-family: sans-serif; }
         .dark body { background-color: #0f172a; }
 
+        /* Centered Branding Watermark */
         .watermark-layer {
             position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
             pointer-events: none; z-index: 0; opacity: 0.05;
         }
         .watermark-layer img { width: 350px; height: auto; }
 
+        /* Dynamic Message Area */
         #messages-container {
             flex: 1; overflow-y: auto; display: flex; flex-direction: column;
             padding: 1.5rem; z-index: 10; scroll-behavior: smooth;
         }
 
-        .bubble { max-width: 85%; padding: 1rem; border-radius: 1.25rem; margin-bottom: 1rem; }
+        .bubble { max-width: 85%; padding: 1rem; border-radius: 1.25rem; margin-bottom: 1rem; position: relative; }
         .user-bubble { background: #8b5cf6; color: white; align-self: flex-end; border-bottom-right-radius: 0; }
         .ai-bubble { background: #f1f5f9; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 0; }
         .dark .ai-bubble { background: #1e293b; color: #f1f5f9; }
 
+        /* Layout Overlays */
         #auth-overlay { position: fixed; inset: 0; z-index: 100; background: white; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
         .dark #auth-overlay { background: #0f172a; }
         
         #sidebar { transition: transform 0.3s ease; }
         @media (max-width: 768px) { #sidebar { position: absolute; height: 100%; z-index: 40; } }
 
-        .social-btn {
-            width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 1rem;
-            display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-            font-weight: 500; font-size: 0.875rem; transition: all 0.2s;
+        .social-icon-btn {
+            padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 1rem;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
         }
-        .dark .social-btn { border-color: #334155; }
-        .social-btn:hover { background-color: #f8fafc; }
-        .dark .social-btn:hover { background-color: #1e293b; }
+        .dark .social-icon-btn { border-color: #334155; }
     </style>
 </head>
 <body class="flex flex-row dark:text-white">
@@ -57,174 +58,187 @@
             <h1 class="text-3xl font-black mb-6 tracking-tighter text-purple-600">RITE GPT</h1>
             
             <form id="login-form" class="space-y-4 text-left mb-6">
-                <input type="email" id="auth-email" placeholder="Email" required class="w-full p-4 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500">
-                <input type="password" id="auth-password" placeholder="Password" required class="w-full p-4 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500">
-                <button type="submit" class="w-full py-4 bg-purple-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-transform">Sign In</button>
+                <div>
+                    <label class="text-[10px] font-bold uppercase text-slate-400 ml-1">Identity</label>
+                    <input type="email" id="auth-email" placeholder="Email Address" required 
+                        class="w-full p-4 mt-1 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase text-slate-400 ml-1">Security Key</label>
+                    <input type="password" id="auth-password" placeholder="Password" required 
+                        class="w-full p-4 mt-1 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <button type="submit" class="w-full py-4 bg-purple-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-transform">
+                    Authorize Access
+                </button>
             </form>
 
             <div class="relative flex items-center gap-4 mb-6">
                 <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
-                <span class="text-xs text-slate-400 uppercase font-bold">Or Continue With</span>
+                <span class="text-[10px] text-slate-400 uppercase font-black">Third-Party Sign-In</span>
                 <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
             </div>
 
-            <div class="space-y-3">
-                <button onclick="socialLogin('Google')" class="social-btn">
-                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-5 h-5"> Google
+            <div class="grid grid-cols-3 gap-3 mb-8">
+                <button onclick="socialIn('Google')" class="social-icon-btn hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" class="w-5 h-5">
                 </button>
-                <button onclick="socialLogin('Outlook')" class="social-btn">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" class="w-5 h-5"> Outlook
+                <button onclick="socialIn('Outlook')" class="social-icon-btn hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" class="w-5 h-5">
                 </button>
-                <button onclick="socialLogin('Apple')" class="social-btn">
-                    <i class="fa-brands fa-apple text-lg"></i> Apple ID
+                <button onclick="socialIn('Apple')" class="social-icon-btn hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <i class="fa-brands fa-apple text-xl"></i>
                 </button>
             </div>
 
-            <button id="guest-btn" class="mt-6 text-slate-400 text-sm hover:underline">Continue as Guest</button>
-            <button id="forgot-btn" class="block mx-auto mt-2 text-purple-500 text-xs font-bold uppercase hover:underline">Forgot Password?</button>
+            <button id="forgot-btn" class="text-purple-500 text-xs font-bold uppercase tracking-widest hover:underline">
+                Request SMTP Password Reset
+            </button>
         </div>
     </div>
 
     <aside id="sidebar" class="w-64 bg-slate-50 dark:bg-slate-900 border-r dark:border-slate-800 flex flex-col -translate-x-full md:translate-x-0">
-        <div class="p-4 border-b dark:border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-2 font-bold"><img src="logo.png" class="w-6 h-6"> Rite GPT</div>
+        <div class="p-6 border-b dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2 font-black text-purple-600"><img src="logo.png" class="w-6 h-6"> RITE</div>
             <button class="md:hidden" onclick="toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <button onclick="newChat()" class="m-4 p-3 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold hover:border-purple-500 transition-colors">
-            <i class="fa-solid fa-plus mr-2"></i> New Chat
+        <button onclick="newChat()" class="m-4 p-4 bg-white dark:bg-slate-800 rounded-2xl text-xs font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all">
+            <i class="fa-solid fa-plus mr-2"></i> New Instance
         </button>
-        <div id="chat-history" class="flex-1 overflow-y-auto px-4 space-y-2 text-sm"></div>
-        <div id="admin-actions" class="p-4 border-t dark:border-slate-800 hidden">
-            <button onclick="openSettings()" class="w-full p-3 bg-slate-200 dark:bg-slate-800 rounded-xl font-bold flex items-center justify-center gap-2">
-                <i class="fa-solid fa-gear"></i> Settings
+        <div class="flex-1 overflow-y-auto px-4" id="history"></div>
+        <div id="admin-gate" class="p-4 border-t dark:border-slate-800 hidden">
+            <button onclick="document.getElementById('set-modal').classList.remove('hidden')" class="w-full p-3 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-purple-600">
+                <i class="fa-solid fa-sliders mr-2"></i> Core Settings
             </button>
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
         <header class="h-16 flex items-center justify-between px-6 border-b dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-30">
-            <button class="md:hidden" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest" id="active-model-display">Model: DeepSeek-R1</div>
-            <button onclick="location.reload()" class="text-slate-400"><i class="fa-solid fa-power-off"></i></button>
+            <button class="md:hidden" onclick="toggleSidebar()"><i class="fa-solid fa-bars-staggered"></i></button>
+            <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]" id="model-tag">DeepSeek-R1 Interface</div>
+            <button onclick="location.reload()" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-power-off"></i></button>
         </header>
 
-        <div id="messages-container"><div id="anchor"></div></div>
+        <div id="messages-container">
+            <div class="bubble ai-bubble shadow-sm">Rite GPT is online. Awaiting your instructions.</div>
+            <div id="anchor"></div>
+        </div>
 
         <div class="p-4 bg-transparent z-20">
-            <div class="max-w-4xl mx-auto flex gap-3 items-end bg-slate-100 dark:bg-slate-800 p-2 rounded-2xl shadow-xl border dark:border-slate-700">
-                <textarea id="chat-input" rows="1" placeholder="Type a message..." class="flex-1 bg-transparent p-3 outline-none resize-none"></textarea>
-                <button id="send-btn" class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center transition-transform active:scale-90"><i class="fa-solid fa-arrow-up"></i></button>
+            <div class="max-w-4xl mx-auto flex gap-3 items-end bg-white dark:bg-slate-800 p-2 rounded-[2rem] shadow-2xl border dark:border-slate-700">
+                <textarea id="chat-input" rows="1" placeholder="Describe your objective..." class="flex-1 bg-transparent p-4 outline-none resize-none text-sm"></textarea>
+                <button id="send-btn" class="w-12 h-12 bg-purple-600 text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-purple-500/20">
+                    <i class="fa-solid fa-arrow-up"></i>
+                </button>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div id="settings-modal" class="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-sm p-6 rounded-3xl shadow-2xl">
-            <h2 class="text-xl font-black mb-4">Admin Settings</h2>
-            <div class="space-y-4">
-                <div><label class="text-xs font-bold text-slate-400 uppercase">API Key</label><input type="password" id="set-api" class="w-full p-3 mt-1 rounded-xl border dark:bg-slate-800 dark:border-slate-700 outline-none"></div>
-                <div><label class="text-xs font-bold text-slate-400 uppercase">Model Name</label><input type="text" id="set-model" class="w-full p-3 mt-1 rounded-xl border dark:bg-slate-800 dark:border-slate-700 outline-none"></div>
+    <div id="set-modal" class="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-sm p-8 rounded-[2.5rem] shadow-2xl border dark:border-slate-800">
+            <h2 class="text-xl font-black mb-6">Core Configuration</h2>
+            <div class="space-y-5">
+                <div><label class="text-[10px] font-black uppercase text-slate-400">OpenRouter API</label><input type="password" id="api-in" class="w-full p-4 mt-1 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none"></div>
+                <div><label class="text-[10px] font-black uppercase text-slate-400">Target Model</label><input type="text" id="model-in" class="w-full p-4 mt-1 rounded-2xl border dark:bg-slate-800 dark:border-slate-700 outline-none"></div>
             </div>
-            <div class="mt-6 flex gap-2">
-                <button onclick="saveSettings()" class="flex-1 py-3 bg-purple-600 text-white font-bold rounded-xl">Save</button>
-                <button onclick="closeSettings()" class="flex-1 py-3 bg-slate-200 dark:bg-slate-800 font-bold rounded-xl">Close</button>
+            <div class="mt-8 flex gap-3">
+                <button onclick="saveSet()" class="flex-1 py-4 bg-purple-600 text-white font-bold rounded-2xl">Update</button>
+                <button onclick="document.getElementById('set-modal').classList.add('hidden')" class="flex-1 py-4 bg-slate-100 dark:bg-slate-800 font-bold rounded-2xl">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        let config = {
-            apiKey: "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",
+        // --- EMAILJS SMTP CONFIG ---
+        const SERVICE_ID = "service_razdczy";
+        const TEMPLATE_ID = "template_e4up41f";
+        const PUBLIC_KEY = "jOxlqFxqQPyPsIC5o";
+
+        emailjs.init(PUBLIC_KEY);
+
+        let system = {
+            key: "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",
             model: "deepseek/deepseek-r1:free"
         };
 
         const loginForm = document.getElementById('login-form');
-        const authOverlay = document.getElementById('auth-overlay');
-        const adminActions = document.getElementById('admin-actions');
-        const messagesDiv = document.getElementById('messages-container');
-        const chatInput = document.getElementById('chat-input');
+        const authView = document.getElementById('auth-overlay');
+        const chatBox = document.getElementById('messages-container');
+        const input = document.getElementById('chat-input');
         const sendBtn = document.getElementById('send-btn');
         const anchor = document.getElementById('anchor');
 
-        // Logic for Admin Password and Social Logins
+        // --- AUTHENTICATION ---
         loginForm.onsubmit = (e) => {
             e.preventDefault();
             const email = document.getElementById('auth-email').value.trim().toLowerCase();
-            const pass = document.getElementById('auth-password').value;
+            const pass = document.getElementById('auth-password').value.trim();
             
-            const isAdmin = (email === "admin@ritegpt.pro" || email === "admin@ritegpt.com");
-
-            if (isAdmin) {
+            const isRoot = (email === "admin@ritegpt.pro" || email === "admin@ritegpt.com");
+            if (isRoot) {
                 if (pass === "Kani@2211$") {
-                    adminActions.classList.remove('hidden');
-                    authOverlay.style.display = 'none';
-                } else {
-                    alert("Invalid Admin Password.");
-                }
-            } else {
-                // Allow non-admin emails to bypass for now as requested for "users"
-                authOverlay.style.display = 'none';
-            }
+                    document.getElementById('admin-gate').classList.remove('hidden');
+                    authView.style.display = 'none';
+                } else { alert("Access Denied: Invalid root password."); }
+            } else { authView.style.display = 'none'; }
         };
 
-        function socialLogin(provider) {
-            alert(provider + " login integration is coming soon! Continuing as guest for now.");
-            authOverlay.style.display = 'none';
-        }
+        function socialIn(p) { alert(`Syncing with ${p} gateway...`); authView.style.display = 'none'; }
 
-        document.getElementById('guest-btn').onclick = () => authOverlay.style.display = 'none';
-        document.getElementById('forgot-btn').onclick = () => {
-            const email = document.getElementById('auth-email').value;
-            alert(email ? "Reset link sent to " + email : "Please enter your email address.");
+        // --- SMTP RESET ---
+        document.getElementById('forgot-btn').onclick = async () => {
+            const mail = document.getElementById('auth-email').value;
+            if(!mail) { alert("Identify email account first."); return; }
+            try {
+                await emailjs.send(SERVICE_ID, TEMPLATE_ID, { user_email: mail });
+                alert("SMTP Handshake Success: Reset link dispatched to " + mail);
+            } catch { alert("SMTP Link Failed. Verify Service Status."); }
         };
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
-        function newChat() { messagesDiv.innerHTML = '<div id="anchor"></div>'; if(window.innerWidth < 768) toggleSidebar(); }
-        
-        function openSettings() {
-            document.getElementById('set-api').value = config.apiKey;
-            document.getElementById('set-model').value = config.model;
-            document.getElementById('settings-modal').classList.remove('hidden');
-        }
-        function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-        function saveSettings() {
-            config.apiKey = document.getElementById('set-api').value;
-            config.model = document.getElementById('set-model').value;
-            document.getElementById('active-model-display').innerText = "Model: " + config.model;
-            closeSettings();
-        }
-
-        async function handleSend() {
-            const text = chatInput.value.trim(); if(!text) return;
-            chatInput.value = ''; chatInput.style.height = 'auto';
-            appendMsg('user', text);
-            const aiBox = appendMsg('ai', '<i class="fa-solid fa-spinner animate-spin"></i> Thinking...');
+        // --- CORE CHAT ---
+        async function runAI() {
+            const prompt = input.value.trim(); if(!prompt) return;
+            input.value = ''; input.style.height = 'auto';
+            
+            postMsg('user', prompt);
+            const aiSlot = postMsg('ai', '<i class="fa-solid fa-circle-notch animate-spin text-purple-500"></i> Synchronizing...');
+            
             try {
                 const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
-                    headers: { "Authorization": `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ model: config.model, messages: [{role: "user", content: text}] })
+                    headers: { "Authorization": `Bearer ${system.key}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ model: system.model, messages: [{role: "user", content: prompt}] })
                 });
                 const data = await res.json();
-                aiBox.innerHTML = DOMPurify.sanitize(marked.parse(data.choices[0].message.content));
-            } catch { aiBox.innerText = "Error contacting AI."; }
-            scrollToBottom();
+                aiSlot.innerHTML = DOMPurify.sanitize(marked.parse(data.choices[0].message.content));
+            } catch { aiSlot.innerText = "Signal Loss: Check OpenRouter API."; }
+            scroll();
         }
 
-        function appendMsg(role, content) {
-            const b = document.createElement('div');
-            b.className = `bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble'}`;
-            b.innerHTML = content;
-            messagesDiv.insertBefore(b, anchor);
-            scrollToBottom();
-            return b;
+        function postMsg(role, html) {
+            const div = document.createElement('div');
+            div.className = `bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble shadow-sm border border-slate-100 dark:border-slate-800'}`;
+            div.innerHTML = html;
+            chatBox.insertBefore(div, anchor);
+            scroll();
+            return div;
         }
 
-        function scrollToBottom() { anchor.scrollIntoView({ behavior: 'smooth' }); }
+        function scroll() { anchor.scrollIntoView({ behavior: 'smooth', block: 'end' }); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
+        function newChat() { chatBox.innerHTML = '<div id="anchor"></div>'; if(window.innerWidth < 768) toggleSidebar(); }
 
-        sendBtn.onclick = handleSend;
-        chatInput.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } };
-        chatInput.oninput = function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; };
+        function saveSet() {
+            system.key = document.getElementById('api-in').value || system.key;
+            system.model = document.getElementById('model-in').value || system.model;
+            document.getElementById('model-tag').innerText = system.model;
+            document.getElementById('set-modal').classList.add('hidden');
+        }
+
+        sendBtn.onclick = runAI;
+        input.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runAI(); } };
+        input.oninput = function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; };
     </script>
 </body>
 </html>
