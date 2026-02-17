@@ -8,60 +8,76 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // Immediate Theme Check to prevent flicker
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <style>
         .brand-text { background: linear-gradient(135deg, #4285f4, #9b72f3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
-        body { background-color: #000; color: #fff; }
+        
+        /* Light/Dark Transitions */
+        body { transition: background-color 0.3s, color 0.3s; background-color: #ffffff; color: #1a1a1a; }
+        .dark body { background-color: #0b0b0b; color: #f0f0f0; }
+
+        /* Watermark */
         #chat-container {
             background-image: url('logo.png'); background-repeat: no-repeat;
-            background-position: center; background-size: 200px; background-attachment: fixed;
-            background-blend-mode: overlay; background-color: rgba(10, 10, 10, 0.98);
+            background-position: center; background-size: 250px; background-attachment: fixed;
+            background-blend-mode: multiply;
         }
-        .model-pill { padding: 6px 14px; border-radius: 20px; border: 1px solid #333; font-size: 10px; font-weight: bold; cursor: pointer; background: #111; color: #666; white-space: nowrap; }
-        .model-pill.active { background: #4285f4 !important; color: #fff !important; border-color: #4285f4; }
-        #auth-overlay { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .debug-log { position: fixed; bottom: 10px; right: 10px; font-size: 8px; color: #444; pointer-events: none; }
+        .dark #chat-container { background-blend-mode: overlay; background-color: rgba(11, 11, 11, 0.98); }
+
+        /* Model Pills */
+        .model-pill { padding: 6px 14px; border-radius: 20px; border: 1px solid #e5e7eb; font-size: 10px; font-weight: bold; cursor: pointer; background: #f9fafb; color: #6b7280; white-space: nowrap; }
+        .dark .model-pill { border: 1px solid #262626; background: #171717; color: #a3a3a3; }
+        .model-pill.active { background: #4285f4 !important; color: #fff !important; border-color: #4285f4; box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3); }
+        
+        #auth-overlay { position: fixed; inset: 0; background: inherit; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="flex h-full overflow-hidden">
 
-    <div id="debug" class="debug-log">System Initializing...</div>
-
     <div id="auth-overlay">
-        <div class="w-full max-w-sm p-8 text-center bg-[#111] border border-zinc-800 rounded-[32px] shadow-2xl">
+        <div class="w-full max-w-sm p-8 text-center bg-white dark:bg-[#171717] border border-gray-200 dark:border-zinc-800 rounded-[32px] shadow-2xl">
             <img src="logo.png" class="w-16 h-16 mx-auto mb-4" onerror="this.style.display='none'">
             <h1 class="text-4xl brand-text mb-2">RiteGPT</h1>
-            <p class="text-zinc-500 text-xs mb-8">Universal Intelligence Interface</p>
-            
-            <div class="space-y-3">
-                <input type="email" id="email" placeholder="Email" class="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 outline-none text-sm">
-                <input type="password" id="pass" placeholder="Password" class="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 outline-none text-sm">
+            <div class="space-y-3 mt-6">
+                <input type="email" id="email" placeholder="Email" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 outline-none text-sm">
+                <input type="password" id="pass" placeholder="Password" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 outline-none text-sm">
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="handleAuth('in')" class="py-4 bg-white text-black font-black rounded-2xl text-sm hover:bg-zinc-200">SIGN IN</button>
-                    <button onclick="handleAuth('up')" class="py-4 bg-zinc-800 text-white font-black rounded-2xl text-sm border border-zinc-700">SIGN UP</button>
+                    <button onclick="handleAuth('in')" class="py-4 bg-black dark:bg-white text-white dark:text-black font-black rounded-2xl text-sm">SIGN IN</button>
+                    <button onclick="handleAuth('up')" class="py-4 bg-gray-100 dark:bg-zinc-800 text-black dark:text-white font-black rounded-2xl text-sm border border-gray-200 dark:border-zinc-700">SIGN UP</button>
                 </div>
-                <div class="pt-4 border-t border-zinc-800 mt-4">
-                    <button onclick="continueAsGuest()" class="w-full py-4 text-blue-500 font-bold text-sm hover:bg-blue-500/5 rounded-2xl">CONTINUE AS GUEST</button>
-                </div>
+                <button onclick="continueAsGuest()" class="w-full py-4 text-blue-500 font-bold text-sm hover:underline">CONTINUE AS GUEST</button>
             </div>
         </div>
     </div>
 
-    <aside class="w-64 bg-[#0a0a0a] border-r border-zinc-800 flex flex-col hidden md:flex">
-        <div class="p-4"><button onclick="location.reload()" class="w-full py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-bold hover:bg-zinc-800">+ NEW CHAT</button></div>
+    <aside class="w-64 bg-gray-50 dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-zinc-800 flex flex-col hidden md:flex">
+        <div class="p-4"><button onclick="location.reload()" class="w-full py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl text-xs font-bold shadow-sm">+ NEW CHAT</button></div>
         <div id="history" class="flex-1 overflow-y-auto px-4 space-y-2"></div>
-        <div class="p-4 border-t border-zinc-800">
+        
+        <div class="p-4 border-t border-gray-200 dark:border-zinc-800 space-y-1">
+            <button onclick="toggleTheme()" class="w-full text-left p-3 text-[10px] font-bold uppercase tracking-tighter hover:bg-gray-200 dark:hover:bg-zinc-800 rounded-xl transition-colors">
+                <i class="fa-solid fa-circle-half-stroke mr-2"></i> Appearance
+            </button>
             <button id="adm-btn" onclick="document.getElementById('adm-modal').classList.remove('hidden')" class="hidden w-full text-left p-3 text-[10px] text-purple-500 font-bold uppercase tracking-tighter">ADMIN CONFIG</button>
-            <button onclick="logout()" class="w-full text-left p-3 text-[10px] text-zinc-500 font-bold uppercase tracking-tighter hover:text-red-500">LOGOUT / EXIT</button>
+            <button onclick="logout()" class="w-full text-left p-3 text-[10px] text-zinc-400 font-bold uppercase tracking-tighter hover:text-red-500">LOGOUT</button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0 bg-[#000]">
-        <header class="h-14 border-b border-zinc-800 flex items-center px-6 justify-between">
+    <main class="flex-1 flex flex-col min-w-0">
+        <header class="h-14 border-b border-gray-200 dark:border-zinc-800 flex items-center px-6 justify-between bg-white dark:bg-[#0b0b0b]">
             <div class="flex items-center gap-3">
                 <img src="logo.png" class="w-6 h-6" onerror="this.style.display='none'">
                 <span class="brand-text font-black tracking-tighter text-lg">RiteGPT</span>
             </div>
-            <div id="status-tag" class="text-[9px] px-2 py-0.5 rounded border border-zinc-800 text-zinc-500 font-bold">SECURE ENCRYPTED</div>
+            <div id="status-tag" class="text-[9px] px-2 py-0.5 rounded border border-gray-200 dark:border-zinc-800 text-gray-400 font-bold uppercase">Secure</div>
         </header>
 
         <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-10 flex flex-col">
@@ -71,72 +87,62 @@
         <div class="p-4 md:pb-8">
             <div class="max-w-3xl mx-auto">
                 <div id="pill-box" class="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar"></div>
-                <div class="bg-zinc-900/50 rounded-[24px] p-2 flex items-center border border-zinc-800 focus-within:border-zinc-600 transition-all">
-                    <input id="input" type="text" placeholder="Type your message..." class="flex-1 bg-transparent p-3 outline-none text-sm text-white ml-2">
-                    <button onclick="send()" class="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition-all"><i class="fa-solid fa-arrow-up"></i></button>
+                <div class="bg-gray-100 dark:bg-zinc-900 rounded-[24px] p-2 flex items-center border border-gray-200 dark:border-zinc-800 focus-within:border-blue-500 transition-all">
+                    <input id="input" type="text" placeholder="Type your message..." class="flex-1 bg-transparent p-3 outline-none text-sm text-inherit ml-2">
+                    <button onclick="send()" class="w-10 h-10 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center hover:scale-105 transition-all"><i class="fa-solid fa-arrow-up"></i></button>
                 </div>
             </div>
         </div>
     </main>
 
-    <div id="adm-modal" class="fixed inset-0 bg-black/95 z-[2000] hidden flex items-center justify-center p-6">
-        <div class="bg-zinc-900 p-8 rounded-[32px] w-full max-w-sm border border-zinc-800">
-            <h2 class="text-xl font-bold mb-6 text-white">System Settings</h2>
-            <input id="new-key" type="password" placeholder="OpenRouter API Key" class="w-full p-4 rounded-2xl bg-black border border-zinc-800 mb-3 outline-none text-sm">
-            <textarea id="new-models" placeholder="Models (comma separated)" class="w-full p-4 rounded-2xl bg-black border border-zinc-800 mb-6 h-32 outline-none text-xs text-zinc-400"></textarea>
+    <div id="adm-modal" class="fixed inset-0 bg-black/90 z-[2000] hidden flex items-center justify-center p-6">
+        <div class="bg-white dark:bg-zinc-900 p-8 rounded-[32px] w-full max-w-sm border border-gray-200 dark:border-zinc-800">
+            <h2 class="text-xl font-bold mb-6">System Settings</h2>
+            <input id="new-key" type="password" placeholder="API Key" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-zinc-800 mb-3 outline-none">
+            <textarea id="new-models" placeholder="Models (comma separated)" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-zinc-800 mb-6 h-32 outline-none text-xs"></textarea>
             <button onclick="save()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold">SAVE CONFIG</button>
-            <button onclick="document.getElementById('adm-modal').classList.add('hidden')" class="w-full mt-4 text-xs text-zinc-600 font-bold">CLOSE</button>
+            <button onclick="document.getElementById('adm-modal').classList.add('hidden')" class="w-full mt-4 text-xs font-bold text-gray-400">CLOSE</button>
         </div>
     </div>
 
     <script>
         const DB_URL = "https://rteqdgcihjgztlpgradu.supabase.co";
         const DB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0ZXFkZ2NpaGpnenRscGdyYWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyOTkyMDAsImV4cCI6MjA4NTg3NTIwMH0.hS76HmVox1cD9542ZXSyFoQzWPRHZvqi3DQGpdFn4Rc";
-        
-        let sb;
-        try {
-            sb = supabase.createClient(DB_URL, DB_KEY);
-            log("Database: Connected");
-        } catch(e) { log("Database Error: " + e.message); }
+        const sb = supabase.createClient(DB_URL, DB_KEY);
 
         let config = { key: "", models: [], active: "", user: null, isGuest: false };
 
-        function log(msg) {
-            console.log(msg);
-            document.getElementById('debug').innerText = msg;
-        }
-
         async function init() {
-            log("Checking session...");
-            const { data, error } = await sb.auth.getSession();
+            const { data } = await sb.auth.getSession();
             if (data?.session) {
                 config.user = data.session.user;
-                log("Session found: " + config.user.email);
                 startApp();
-            } else {
-                log("No session found. Ready for login.");
             }
         }
 
         async function startApp() {
             document.getElementById('auth-overlay').style.display = 'none';
             if(config.user?.email === "admin@ritegpt.pro") document.getElementById('adm-btn').classList.remove('hidden');
-            
-            if(config.isGuest) {
-                document.getElementById('status-tag').innerText = "GUEST SESSION";
-                document.getElementById('status-tag').classList.add('text-amber-500');
-            }
+            if(config.isGuest) document.getElementById('status-tag').innerText = "GUEST MODE";
 
-            log("Loading system config...");
             const { data } = await sb.from('config').select('*').order('id', { ascending: false }).limit(1).single();
             if(data) {
                 config.key = data.api_key;
                 config.models = data.model_name.split(',').map(m => m.trim());
                 config.active = config.models[0];
                 renderPills();
-                log("Config Loaded: " + config.models.length + " models ready.");
             }
             if(!config.isGuest) loadHistory();
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
         }
 
         function renderPills() {
@@ -154,27 +160,14 @@
         async function handleAuth(type) {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('pass').value.trim();
-            
-            if(!email || !password) return alert("Enter email and password.");
-            log(`Attempting ${type === 'in' ? 'Login' : 'Signup'}...`);
-
-            const { data, error } = type === 'in' 
-                ? await sb.auth.signInWithPassword({ email, password })
-                : await sb.auth.signUp({ email, password });
-
-            if(error) {
-                log("Auth Error: " + error.message);
-                alert(error.message);
-            } else {
-                log("Auth Success. Reloading...");
-                location.reload();
-            }
+            if(!email || !password) return alert("Missing fields.");
+            const { error } = type === 'in' ? await sb.auth.signInWithPassword({ email, password }) : await sb.auth.signUp({ email, password });
+            if(error) alert(error.message); else location.reload();
         }
 
         function continueAsGuest() {
-            log("Entering Guest Mode...");
             config.isGuest = true;
-            config.user = { id: 'guest_user' };
+            config.user = { id: 'guest' };
             startApp();
         }
 
@@ -182,45 +175,32 @@
             const input = document.getElementById('input');
             const txt = input.value.trim(); if(!txt) return;
             input.value = '';
-            
             addMsg('user', txt);
-            const ai = addMsg('ai', '<i class="fa-solid fa-circle-notch fa-spin"></i> Thinking...');
+            const ai = addMsg('ai', 'Thinking...');
 
             try {
                 const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
-                    headers: { 
-                        "Authorization": `Bearer ${config.key}`, 
-                        "Content-Type": "application/json",
-                        "HTTP-Referer": "https://ritegpt.pro",
-                        "X-Title": "RiteGPT"
-                    },
+                    headers: { "Authorization": `Bearer ${config.key}`, "Content-Type": "application/json" },
                     body: JSON.stringify({ model: config.active, messages: [{role: "user", content: txt}] })
                 });
-                
                 const d = await res.json();
-                if(d.error) throw new Error(d.error.message);
-                
                 const reply = d.choices[0].message.content;
                 ai.innerHTML = marked.parse(reply);
-                
                 if(!config.isGuest) {
                     await sb.from('messages').insert([{ user_id: config.user.id, role: 'user', content: txt }, { user_id: config.user.id, role: 'assistant', content: reply }]);
                     loadHistory();
                 }
-            } catch(e) { 
-                log("API Error: " + e.message);
-                ai.innerText = "Connection failed. Please check Admin API Key."; 
-            }
+            } catch { ai.innerText = "Error checking API."; }
         }
 
         function addMsg(role, content) {
             const m = document.getElementById('messages');
             const d = document.createElement('div');
-            d.className = role === 'user' ? "ml-auto bg-zinc-900 p-4 rounded-2xl max-w-[85%] border border-zinc-800 text-sm" : "mr-auto p-4 max-w-full text-zinc-300 text-sm leading-relaxed";
+            d.className = role === 'user' ? "ml-auto bg-gray-100 dark:bg-zinc-800 p-4 rounded-2xl max-w-[85%] text-sm" : "mr-auto p-4 max-w-full text-sm leading-relaxed";
             d.innerHTML = role === 'ai' && content !== 'Thinking...' ? marked.parse(content) : content;
             m.appendChild(d);
-            document.getElementById('chat-container').scrollTo({ top: m.scrollHeight, behavior: 'smooth' });
+            document.getElementById('chat-container').scrollTo(0, m.scrollHeight);
             return d;
         }
 
@@ -228,26 +208,22 @@
             const { data } = await sb.from('messages').select('*').eq('user_id', config.user.id).order('created_at', { ascending: false });
             const list = document.getElementById('history');
             list.innerHTML = '';
-            const sessions = [...new Map(data.filter(m => m.role === 'user').map(x => [x.content.substring(0,30), x])).values()];
-            sessions.forEach(s => {
+            const unique = [...new Map(data.filter(m => m.role === 'user').map(x => [x.content.substring(0,30), x])).values()];
+            unique.forEach(s => {
                 const item = document.createElement('div');
-                item.className = "p-3 text-[11px] opacity-40 hover:opacity-100 hover:bg-zinc-900 rounded-xl cursor-pointer truncate transition-all";
-                item.innerHTML = `<i class="fa-regular fa-message mr-2 text-[8px]"></i> ${s.content}`;
+                item.className = "p-3 text-[11px] opacity-50 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl cursor-pointer truncate transition-all";
+                item.innerHTML = s.content;
                 list.appendChild(item);
             });
         }
 
         async function save() {
-            const k = document.getElementById('new-key').value;
-            const m = document.getElementById('new-models').value;
-            const { error } = await sb.from('config').insert([{ api_key: k, model_name: m }]);
-            if(error) alert(error.message); else location.reload();
+            await sb.from('config').insert([{ api_key: document.getElementById('new-key').value, model_name: document.getElementById('new-models').value }]);
+            location.reload();
         }
 
         function logout() { sb.auth.signOut(); location.reload(); }
         document.getElementById('input').onkeydown = (e) => { if(e.key === 'Enter') send(); };
-        
-        // Final sanity check on init
         window.onload = init;
     </script>
 </body>
