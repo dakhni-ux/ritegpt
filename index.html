@@ -3,234 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RiteGPT | Universal AI</title>
+    <title>RiteGPT | AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
-    </script>
     <style>
         .brand-text { background: linear-gradient(135deg, #4285f4, #9b72f3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
-        
-        /* Watermark Background */
-        #chat-flow {
-            position: relative;
-            background-image: url('logo.png');
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: 300px;
-            background-attachment: local;
+        .dark body { background-color: #131314; color: #e3e3e3; }
+        #chat-container {
+            background-image: url('logo.png'); background-repeat: no-repeat;
+            background-position: center; background-size: 200px; background-attachment: fixed;
         }
-        .dark #chat-flow { background-blend-mode: overlay; background-color: rgba(19, 19, 20, 0.96); opacity: 1; }
-        #chat-flow::before {
-            content: ""; position: absolute; inset: 0; 
-            background: inherit; opacity: 0.05; pointer-events: none;
-        }
-
-        /* Model Selector Styling */
-        .model-chip { 
-            padding: 10px 20px; border-radius: 14px; border: 1.5px solid #e5e7eb; 
-            font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); background: white; color: #6b7280;
-        }
-        .dark .model-chip { background: #1e1f20; border-color: #3c4043; color: #9aa0a6; }
-        
-        .model-chip.active { 
-            background: #4285f4 !important; color: white !important; 
-            border-color: #4285f4 !important; transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
-        }
-
-        .chat-bubble { max-width: 85%; padding: 14px 18px; border-radius: 20px; margin-bottom: 15px; position: relative; z-index: 10; }
-        .user-bubble { background: #f0f4f9; align-self: flex-end; color: #1f1f1f; }
-        .dark .user-bubble { background: #2f2f2f; color: #e3e3e3; }
-        .ai-bubble { align-self: flex-start; }
-
-        #auth-overlay { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .dark #auth-overlay { background: #131314; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .dark #chat-container { background-blend-mode: overlay; background-color: rgba(19, 19, 20, 0.98); }
+        .model-pill { padding: 8px 15px; border-radius: 12px; border: 1px solid #333; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; background: #1e1f20; color: #9aa0a6; }
+        .model-pill.active { background: #4285f4 !important; color: white !important; border-color: #4285f4; }
+        #auth-overlay { position: fixed; inset: 0; background: #131314; z-index: 1000; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
-<body class="flex h-full overflow-hidden dark:bg-[#131314] bg-white text-slate-900 dark:text-slate-100">
+<body class="flex h-full overflow-hidden dark">
 
     <div id="auth-overlay">
-        <div class="w-full max-w-sm p-8 text-center">
-            <img src="logo.png" class="w-20 h-20 mx-auto mb-6">
-            <h1 class="text-4xl brand-text mb-8">RiteGPT</h1>
-            <form id="auth-form" class="space-y-4">
-                <input type="email" id="auth-email" placeholder="Email" required class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none">
-                <input type="password" id="auth-pass" placeholder="Password" required class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none">
-                <button type="submit" id="auth-btn" class="w-full py-4 bg-black dark:bg-white dark:text-black text-white font-bold rounded-2xl">Sign In</button>
-            </form>
-            <button onclick="toggleAuthMode()" class="mt-6 text-sm font-bold text-blue-500" id="auth-toggle-text">New account? Sign Up</button>
+        <div class="w-full max-w-sm p-8 text-center bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl">
+            <img src="logo.png" class="w-16 h-16 mx-auto mb-4">
+            <h1 class="text-3xl brand-text mb-2">RiteGPT</h1>
+            <p class="text-zinc-500 text-sm mb-8">Choose how you'd like to continue</p>
+            
+            <div id="auth-fields" class="space-y-3 mb-6">
+                <input type="email" id="email" placeholder="Email" class="w-full p-3 rounded-xl bg-zinc-800 border border-zinc-700 outline-none">
+                <input type="password" id="pass" placeholder="Password" class="w-full p-3 rounded-xl bg-zinc-800 border border-zinc-700 outline-none">
+                <button onclick="handleAuth('in')" class="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-zinc-200">Sign In</button>
+                <button onclick="handleAuth('up')" class="w-full py-3 bg-zinc-800 text-white font-bold rounded-xl border border-zinc-700 hover:bg-zinc-700">Sign Up</button>
+            </div>
+
+            <div class="border-t border-zinc-800 pt-6">
+                <button onclick="continueAsGuest()" class="w-full py-3 text-blue-500 font-bold hover:underline">Continue as Guest</button>
+                <p class="text-[10px] text-zinc-600 mt-2 italic">Guest data is not saved and cleared on refresh.</p>
+            </div>
         </div>
     </div>
 
-    <aside class="w-64 bg-[#f0f4f9] dark:bg-[#1e1f20] flex flex-col border-r dark:border-zinc-800 hidden md:flex">
-        <div class="p-4"><button onclick="location.reload()" class="w-full py-3 bg-white dark:bg-zinc-800 rounded-xl text-sm font-bold shadow-sm">+ New Chat</button></div>
-        <div id="history-list" class="flex-1 overflow-y-auto px-4 space-y-2 py-4"></div>
-        <div class="p-4 border-t dark:border-zinc-800 space-y-2">
-            <button onclick="toggleTheme()" class="w-full text-left p-2 text-[10px] font-bold uppercase hover:bg-black/5 dark:hover:bg-white/5 rounded"><i class="fa-solid fa-circle-half-stroke mr-2"></i> Mode</button>
-            <button id="admin-panel-btn" onclick="document.getElementById('admin-modal').classList.remove('hidden')" class="hidden w-full text-left p-2 text-[10px] text-purple-500 font-bold uppercase hover:bg-black/5 dark:hover:bg-white/5 rounded"><i class="fa-solid fa-gear mr-2"></i> Admin</button>
-            <button onclick="signOut()" class="w-full text-left p-2 text-[10px] text-zinc-500 font-bold uppercase hover:text-red-500"><i class="fa-solid fa-power-off mr-2"></i> Logout</button>
+    <aside class="w-64 bg-[#1e1f20] border-r border-zinc-800 flex flex-col hidden md:flex">
+        <div class="p-4"><button onclick="location.reload()" class="w-full py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm font-bold shadow-sm">+ New Chat</button></div>
+        <div id="history" class="flex-1 overflow-y-auto px-3 space-y-1"></div>
+        <div class="p-4 border-t border-zinc-800">
+            <div id="user-badge" class="mb-4 text-[10px] uppercase font-bold text-zinc-500 px-2 tracking-widest"></div>
+            <button id="adm-btn" onclick="document.getElementById('adm-modal').classList.remove('hidden')" class="hidden w-full text-left p-2 text-[10px] text-purple-500 font-bold uppercase hover:bg-zinc-800 rounded">Admin Settings</button>
+            <button onclick="logout()" class="w-full text-left p-2 text-[10px] text-zinc-500 font-bold uppercase hover:text-red-400">Logout / Exit</button>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col min-w-0">
-        <header class="h-16 flex items-center px-6 border-b dark:border-zinc-800 justify-between">
+        <header class="h-14 border-b border-zinc-800 flex items-center px-4 justify-between">
             <div class="flex items-center gap-3">
-                <img src="logo.png" class="w-8 h-8">
-                <span class="brand-text text-xl">RiteGPT</span>
+                <img src="logo.png" class="w-6 h-6">
+                <span class="brand-text font-bold">RiteGPT</span>
             </div>
-            <div id="model-badge" class="text-[9px] font-black bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full uppercase tracking-widest border border-blue-500/20"></div>
+            <span id="guest-tag" class="hidden text-[9px] bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold uppercase">Guest Mode</span>
         </header>
 
-        <div id="chat-flow" class="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col">
-            <div id="chat-render" class="max-w-3xl mx-auto w-full flex flex-col"></div>
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col">
+            <div id="messages" class="max-w-3xl mx-auto w-full space-y-6"></div>
         </div>
-        
-        <div class="p-4 md:pb-10">
+
+        <div class="p-4">
             <div class="max-w-3xl mx-auto">
-                <div id="model-selector" class="flex gap-2 mb-4 overflow-x-auto no-scrollbar py-2"></div>
-                <div class="relative bg-zinc-100 dark:bg-zinc-800/80 border border-transparent dark:border-zinc-700 rounded-[28px] flex items-end p-2 focus-within:ring-2 ring-blue-500/20 transition-all">
-                    <textarea id="chat-input" rows="1" placeholder="Message RiteGPT..." class="w-full bg-transparent p-4 outline-none resize-none text-sm"></textarea>
-                    <button id="send-btn" class="p-4 text-blue-500 hover:scale-110 transition-all"><i class="fa-solid fa-arrow-up-long text-xl"></i></button>
+                <div id="pill-box" class="flex gap-2 mb-3 overflow-x-auto pb-2 no-scrollbar"></div>
+                <div class="bg-zinc-800 rounded-2xl p-2 flex items-center border border-zinc-700 focus-within:border-blue-500 transition-all">
+                    <input id="input" type="text" placeholder="Message RiteGPT..." class="flex-1 bg-transparent p-2 outline-none text-sm text-white">
+                    <button onclick="send()" class="p-2 text-blue-500"><i class="fa-solid fa-paper-plane text-xl"></i></button>
                 </div>
             </div>
         </div>
     </main>
 
-    <div id="admin-modal" class="fixed inset-0 bg-black/80 z-[2000] hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-zinc-900 p-8 rounded-3xl w-full max-w-sm">
-            <h2 class="text-xl font-bold mb-6">System Config</h2>
-            <input type="password" id="adm-key" placeholder="API Key" class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none mb-3 outline-none">
-            <textarea id="adm-models" placeholder="Model IDs (comma separated)" class="w-full p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none mb-6 h-32 outline-none text-xs"></textarea>
-            <div class="flex gap-2">
-                <button onclick="saveConfig()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-bold">Save</button>
-                <button onclick="document.getElementById('admin-modal').classList.add('hidden')" class="flex-1 py-4 bg-zinc-100 dark:bg-zinc-800 rounded-2xl font-bold">Close</button>
-            </div>
+    <div id="adm-modal" class="fixed inset-0 bg-black/80 z-[2000] hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 p-8 rounded-3xl w-full max-w-sm border border-zinc-800">
+            <h2 class="font-bold mb-4 text-white">Config Panel</h2>
+            <input id="new-key" type="password" placeholder="OpenRouter API Key" class="w-full p-3 rounded bg-zinc-800 border border-zinc-700 mb-2 outline-none text-sm">
+            <textarea id="new-models" placeholder="Models (comma separated)" class="w-full p-3 rounded bg-zinc-800 border border-zinc-700 mb-4 h-24 outline-none text-xs text-white"></textarea>
+            <button onclick="save()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">Update System</button>
+            <button onclick="document.getElementById('adm-modal').classList.add('hidden')" class="w-full mt-4 text-xs text-zinc-500">Close</button>
         </div>
     </div>
 
     <script>
-        const SB_URL = "https://rteqdgcihjgztlpgradu.supabase.co";
-        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0ZXFkZ2NpaGpnenRscGdyYWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyOTkyMDAsImV4cCI6MjA4NTg3NTIwMH0.hS76HmVox1cD9542ZXSyFoQzWPRHZvqi3DQGpdFn4Rc";
-        const _sb = supabase.createClient(SB_URL, SB_KEY);
+        const URL = "https://rteqdgcihjgztlpgradu.supabase.co";
+        const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0ZXFkZ2NpaGpnenRscGdyYWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyOTkyMDAsImV4cCI6MjA4NTg3NTIwMH0.hS76HmVox1cD9542ZXSyFoQzWPRHZvqi3DQGpdFn4Rc";
+        const sb = supabase.createClient(URL, KEY);
 
-        let state = { key: "", models: [], activeModel: "", user: null, isSignUp: false };
+        let config = { key: "", models: [], active: "", user: null, isGuest: false };
 
         async function init() {
-            const { data: { session } } = await _sb.auth.getSession();
+            const { data: { session } } = await sb.auth.getSession();
             if(session) {
-                state.user = session.user;
-                document.getElementById('auth-overlay').style.display = 'none';
-                if(state.user.email === "admin@ritegpt.pro") document.getElementById('admin-panel-btn').classList.remove('hidden');
-                await loadConfig();
-                await loadHistory();
+                config.user = session.user;
+                setupUI();
             }
         }
 
-        async function loadConfig() {
-            const { data } = await _sb.from('config').select('*').order('id', { ascending: false }).limit(1).single();
+        async function setupUI() {
+            document.getElementById('auth-overlay').style.display = 'none';
+            if(config.user && config.user.email === "admin@ritegpt.pro") document.getElementById('adm-btn').classList.remove('hidden');
+            if(config.isGuest) {
+                document.getElementById('guest-tag').classList.remove('hidden');
+                document.getElementById('user-badge').innerText = "Guest User";
+            } else {
+                document.getElementById('user-badge').innerText = config.user.email.split('@')[0];
+            }
+
+            const { data } = await sb.from('config').select('*').order('id', { ascending: false }).limit(1).single();
             if(data) {
-                state.key = data.api_key;
-                state.models = data.model_name.split(',').map(m => m.trim());
-                state.activeModel = state.models[0];
-                renderModelChips();
-                document.getElementById('adm-key').value = data.api_key;
-                document.getElementById('adm-models').value = data.model_name;
+                config.key = data.api_key;
+                config.models = data.model_name.split(',').map(m => m.trim());
+                config.active = config.models[0];
+                renderPills();
             }
+            if(!config.isGuest) loadHistory();
         }
 
-        function renderModelChips() {
-            const container = document.getElementById('model-selector');
-            container.innerHTML = '';
-            state.models.forEach(mid => {
-                const chip = document.createElement('div');
-                const name = mid.split('/').pop().replace(':free','').toUpperCase();
-                chip.className = `model-chip ${mid === state.activeModel ? 'active' : ''}`;
-                chip.innerText = name;
-                chip.onclick = () => {
-                    state.activeModel = mid;
-                    renderModelChips();
-                    document.getElementById('model-badge').innerText = name;
-                };
-                container.appendChild(chip);
+        function renderPills() {
+            const box = document.getElementById('pill-box');
+            box.innerHTML = '';
+            config.models.forEach(m => {
+                const p = document.createElement('div');
+                p.className = `model-pill ${m === config.active ? 'active' : ''}`;
+                p.innerText = m.split('/').pop().toUpperCase().replace(':FREE','');
+                p.onclick = () => { config.active = m; renderPills(); };
+                box.appendChild(p);
             });
-            document.getElementById('model-badge').innerText = state.activeModel.split('/').pop().replace(':free','').toUpperCase();
         }
 
-        async function runChat() {
-            const input = document.getElementById('chat-input');
-            const prompt = input.value.trim(); if(!prompt) return;
-            input.value = ''; addBubble('user', prompt);
-            const ai = addBubble('ai', '<i class="fa-solid fa-spinner fa-spin"></i>');
+        async function send() {
+            const input = document.getElementById('input');
+            const txt = input.value.trim(); if(!txt) return;
+            input.value = '';
             
+            addMsg('user', txt);
+            const ai = addMsg('ai', '<i class="fa-solid fa-spinner fa-spin"></i>');
+
             try {
                 const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
-                    headers: { "Authorization": `Bearer ${state.key}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ model: state.activeModel, messages: [{role: "user", content: prompt}] })
+                    headers: { "Authorization": `Bearer ${config.key}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ model: config.active, messages: [{role: "user", content: txt}] })
                 });
                 const d = await res.json();
-                ai.innerHTML = marked.parse(d.choices[0].message.content);
-                await _sb.from('messages').insert([{ user_id: state.user.id, role: 'user', content: prompt }, { user_id: state.user.id, role: 'assistant', content: d.choices[0].message.content }]);
-            } catch (e) { ai.innerText = "Error. Check Admin Config."; }
+                const reply = d.choices[0].message.content;
+                ai.innerHTML = marked.parse(reply);
+                
+                // ONLY SAVE IF NOT GUEST
+                if(!config.isGuest) {
+                    await sb.from('messages').insert([{ user_id: config.user.id, role: 'user', content: txt }, { user_id: config.user.id, role: 'assistant', content: reply }]);
+                    loadHistory();
+                }
+            } catch { ai.innerText = "Error. Please check Admin API Key."; }
         }
 
-        function addBubble(role, text) {
-            const div = document.createElement('div');
-            div.className = `chat-bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble'}`;
-            div.innerHTML = role === 'user' ? text : marked.parse(text);
-            document.getElementById('chat-render').appendChild(div);
-            document.getElementById('chat-flow').scrollTo(0, 99999);
-            return div;
+        function addMsg(role, content) {
+            const m = document.getElementById('messages');
+            const d = document.createElement('div');
+            d.className = role === 'user' ? "ml-auto bg-blue-600 text-white p-3 rounded-2xl max-w-[80%] shadow-lg" : "mr-auto p-3 max-w-full text-zinc-200 ai-bubble";
+            d.innerHTML = role === 'ai' ? marked.parse(content) : content;
+            m.appendChild(d);
+            document.getElementById('chat-container').scrollTo(0, 99999);
+            return d;
+        }
+
+        async function handleAuth(type) {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('pass').value;
+            if(type === 'in') await sb.auth.signInWithPassword({ email, password });
+            else await sb.auth.signUp({ email, password });
+            location.reload();
+        }
+
+        function continueAsGuest() {
+            config.isGuest = true;
+            config.user = { id: 'guest', email: 'guest@ritegpt.pro' };
+            setupUI();
         }
 
         async function loadHistory() {
-            const { data } = await _sb.from('messages').select('*').eq('user_id', state.user.id).order('created_at', { ascending: false });
-            const list = document.getElementById('history-list');
+            const { data } = await sb.from('messages').select('*').eq('user_id', config.user.id).order('created_at', { ascending: false });
+            const list = document.getElementById('history');
             list.innerHTML = '';
-            const unique = [...new Map(data.filter(m => m.role === 'user').map(x => [x.content.substring(0,30), x])).values()];
-            unique.forEach(item => {
-                const d = document.createElement('div');
-                d.className = "p-3 text-[11px] hover:bg-black/5 dark:hover:bg-white/5 rounded-xl cursor-pointer truncate opacity-70 hover:opacity-100 transition-all";
-                d.innerHTML = `<i class="fa-regular fa-message mr-2"></i> ${item.content}`;
-                list.appendChild(d);
+            const sessions = [...new Map(data.filter(m => m.role === 'user').map(x => [x.content.substring(0,25), x])).values()];
+            sessions.forEach(s => {
+                const item = document.createElement('div');
+                item.className = "p-2 text-xs opacity-50 hover:opacity-100 hover:bg-zinc-800 rounded-lg cursor-pointer truncate transition-all";
+                item.innerHTML = `<i class="fa-regular fa-message mr-2"></i> ${s.content}`;
+                list.appendChild(item);
             });
         }
 
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-        }
-
-        function toggleAuthMode() {
-            state.isSignUp = !state.isSignUp;
-            document.getElementById('auth-btn').innerText = state.isSignUp ? "Create Account" : "Sign In";
-        }
-
-        document.getElementById('auth-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-pass').value;
-            if(state.isSignUp) await _sb.auth.signUp({ email, password: pass });
-            else await _sb.auth.signInWithPassword({ email, password: pass });
-            location.reload();
-        };
-
-        async function saveConfig() {
-            await _sb.from('config').insert([{ key_name: 'admin_settings', api_key: document.getElementById('adm-key').value, model_name: document.getElementById('adm-models').value }]);
+        async function save() {
+            await sb.from('config').insert([{ key_name: 'admin_settings', api_key: document.getElementById('new-key').value, model_name: document.getElementById('new-models').value }]);
             location.reload();
         }
 
-        async function signOut() { await _sb.auth.signOut(); location.reload(); }
-        document.getElementById('send-btn').onclick = runChat;
-        document.getElementById('chat-input').onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runChat(); } };
+        async function logout() { await sb.auth.signOut(); location.reload(); }
+        document.getElementById('input').onkeydown = (e) => { if(e.key === 'Enter') send(); };
         init();
     </script>
 </body>
