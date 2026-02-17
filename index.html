@@ -9,35 +9,42 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
-        // Immediate Theme Check to prevent flicker
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
         }
     </script>
     <style>
         .brand-text { background: linear-gradient(135deg, #4285f4, #9b72f3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
         
-        /* Light/Dark Transitions */
-        body { transition: background-color 0.3s, color 0.3s; background-color: #ffffff; color: #1a1a1a; }
+        body { transition: background-color 0.3s; background-color: #ffffff; color: #1a1a1a; }
         .dark body { background-color: #0b0b0b; color: #f0f0f0; }
 
-        /* Watermark */
+        /* BIG TRANSPARENT WATERMARK */
         #chat-container {
-            background-image: url('logo.png'); background-repeat: no-repeat;
-            background-position: center; background-size: 250px; background-attachment: fixed;
-            background-blend-mode: multiply;
+            background-image: url('logo.png'); 
+            background-repeat: no-repeat;
+            background-position: center; 
+            background-size: 500px; /* Made it much larger */
+            background-attachment: fixed;
+            background-blend-mode: soft-light;
         }
-        .dark #chat-container { background-blend-mode: overlay; background-color: rgba(11, 11, 11, 0.98); }
+        /* Transparency control */
+        #chat-container::before {
+            content: ""; position: fixed; inset: 0; background: inherit; opacity: 0.03; pointer-events: none; z-index: 0;
+        }
+        .dark #chat-container { background-blend-mode: overlay; background-color: rgba(11, 11, 11, 0.99); }
 
-        /* Model Pills */
-        .model-pill { padding: 6px 14px; border-radius: 20px; border: 1px solid #e5e7eb; font-size: 10px; font-weight: bold; cursor: pointer; background: #f9fafb; color: #6b7280; white-space: nowrap; }
+        /* Proper Line Gaps for AI Replies */
+        .ai-reply-text { line-height: 1.8; font-size: 0.95rem; }
+        .ai-reply-text p { margin-bottom: 1.25rem; }
+        .ai-reply-text ul, .ai-reply-text ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+        .ai-reply-text li { margin-bottom: 0.5rem; }
+
+        .model-pill { padding: 6px 14px; border-radius: 20px; border: 1px solid #e5e7eb; font-size: 10px; font-weight: bold; cursor: pointer; background: #f9fafb; color: #6b7280; white-space: nowrap; transition: 0.2s; }
         .dark .model-pill { border: 1px solid #262626; background: #171717; color: #a3a3a3; }
         .model-pill.active { background: #4285f4 !important; color: #fff !important; border-color: #4285f4; box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3); }
         
         #auth-overlay { position: fixed; inset: 0; background: inherit; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="flex h-full overflow-hidden">
@@ -47,49 +54,46 @@
             <img src="logo.png" class="w-16 h-16 mx-auto mb-4" onerror="this.style.display='none'">
             <h1 class="text-4xl brand-text mb-2">RiteGPT</h1>
             <div class="space-y-3 mt-6">
-                <input type="email" id="email" placeholder="Email" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 outline-none text-sm">
-                <input type="password" id="pass" placeholder="Password" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 outline-none text-sm">
+                <input type="email" id="email" placeholder="Email" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 outline-none text-sm dark:text-white">
+                <input type="password" id="pass" placeholder="Password" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 outline-none text-sm dark:text-white">
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="handleAuth('in')" class="py-4 bg-black dark:bg-white text-white dark:text-black font-black rounded-2xl text-sm">SIGN IN</button>
-                    <button onclick="handleAuth('up')" class="py-4 bg-gray-100 dark:bg-zinc-800 text-black dark:text-white font-black rounded-2xl text-sm border border-gray-200 dark:border-zinc-700">SIGN UP</button>
+                    <button onclick="handleAuth('in')" class="py-4 bg-black dark:bg-white text-white dark:text-black font-black rounded-2xl text-xs tracking-widest">SIGN IN</button>
+                    <button onclick="handleAuth('up')" class="py-4 bg-gray-100 dark:bg-zinc-800 text-black dark:text-white font-black rounded-2xl text-xs border border-gray-200 dark:border-zinc-700 tracking-widest">SIGN UP</button>
                 </div>
-                <button onclick="continueAsGuest()" class="w-full py-4 text-blue-500 font-bold text-sm hover:underline">CONTINUE AS GUEST</button>
+                <button onclick="continueAsGuest()" class="w-full py-4 text-blue-500 font-bold text-xs tracking-widest hover:underline">CONTINUE AS GUEST</button>
             </div>
         </div>
     </div>
 
     <aside class="w-64 bg-gray-50 dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-zinc-800 flex flex-col hidden md:flex">
         <div class="p-4"><button onclick="location.reload()" class="w-full py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl text-xs font-bold shadow-sm">+ NEW CHAT</button></div>
-        <div id="history" class="flex-1 overflow-y-auto px-4 space-y-2"></div>
-        
+        <div id="history" class="flex-1 overflow-y-auto px-4 space-y-2 mt-4"></div>
         <div class="p-4 border-t border-gray-200 dark:border-zinc-800 space-y-1">
-            <button onclick="toggleTheme()" class="w-full text-left p-3 text-[10px] font-bold uppercase tracking-tighter hover:bg-gray-200 dark:hover:bg-zinc-800 rounded-xl transition-colors">
-                <i class="fa-solid fa-circle-half-stroke mr-2"></i> Appearance
-            </button>
-            <button id="adm-btn" onclick="document.getElementById('adm-modal').classList.remove('hidden')" class="hidden w-full text-left p-3 text-[10px] text-purple-500 font-bold uppercase tracking-tighter">ADMIN CONFIG</button>
-            <button onclick="logout()" class="w-full text-left p-3 text-[10px] text-zinc-400 font-bold uppercase tracking-tighter hover:text-red-500">LOGOUT</button>
+            <button onclick="toggleTheme()" class="w-full text-left p-3 text-[10px] font-bold uppercase tracking-tighter hover:bg-gray-200 dark:hover:bg-zinc-800 rounded-xl"><i class="fa-solid fa-moon mr-2"></i> Appearance</button>
+            <button id="adm-btn" onclick="document.getElementById('adm-modal').classList.remove('hidden')" class="hidden w-full text-left p-3 text-[10px] text-purple-500 font-bold uppercase tracking-tighter"><i class="fa-solid fa-crown mr-2"></i> Admin Panel</button>
+            <button onclick="logout()" class="w-full text-left p-3 text-[10px] text-zinc-400 font-bold uppercase tracking-tighter hover:text-red-500"><i class="fa-solid fa-right-from-bracket mr-2"></i> Logout</button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0">
-        <header class="h-14 border-b border-gray-200 dark:border-zinc-800 flex items-center px-6 justify-between bg-white dark:bg-[#0b0b0b]">
+    <main class="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0b0b0b] relative">
+        <header class="h-14 border-b border-gray-200 dark:border-zinc-800 flex items-center px-6 justify-between relative z-10 bg-white/80 dark:bg-[#0b0b0b]/80 backdrop-blur-md">
             <div class="flex items-center gap-3">
                 <img src="logo.png" class="w-6 h-6" onerror="this.style.display='none'">
                 <span class="brand-text font-black tracking-tighter text-lg">RiteGPT</span>
             </div>
-            <div id="status-tag" class="text-[9px] px-2 py-0.5 rounded border border-gray-200 dark:border-zinc-800 text-gray-400 font-bold uppercase">Secure</div>
+            <div id="status-tag" class="text-[9px] px-2 py-0.5 rounded border border-gray-200 dark:border-zinc-800 text-gray-400 font-bold uppercase tracking-widest">Universal v3</div>
         </header>
 
-        <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-10 flex flex-col">
-            <div id="messages" class="max-w-3xl mx-auto w-full space-y-8"></div>
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-10 flex flex-col relative">
+            <div id="messages" class="max-w-3xl mx-auto w-full space-y-8 relative z-10"></div>
         </div>
 
-        <div class="p-4 md:pb-8">
+        <div class="p-4 md:pb-8 relative z-10 bg-gradient-to-t from-white dark:from-[#0b0b0b] via-white dark:via-[#0b0b0b] to-transparent">
             <div class="max-w-3xl mx-auto">
                 <div id="pill-box" class="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar"></div>
-                <div class="bg-gray-100 dark:bg-zinc-900 rounded-[24px] p-2 flex items-center border border-gray-200 dark:border-zinc-800 focus-within:border-blue-500 transition-all">
-                    <input id="input" type="text" placeholder="Type your message..." class="flex-1 bg-transparent p-3 outline-none text-sm text-inherit ml-2">
-                    <button onclick="send()" class="w-10 h-10 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center hover:scale-105 transition-all"><i class="fa-solid fa-arrow-up"></i></button>
+                <div class="bg-gray-100 dark:bg-zinc-900 rounded-[24px] p-2 flex items-center border border-gray-200 dark:border-zinc-800 focus-within:ring-2 ring-blue-500/20 transition-all">
+                    <input id="input" type="text" placeholder="Ask me anything..." class="flex-1 bg-transparent p-3 outline-none text-sm text-inherit ml-2">
+                    <button onclick="send()" class="w-10 h-10 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all"><i class="fa-solid fa-arrow-up"></i></button>
                 </div>
             </div>
         </div>
@@ -98,9 +102,9 @@
     <div id="adm-modal" class="fixed inset-0 bg-black/90 z-[2000] hidden flex items-center justify-center p-6">
         <div class="bg-white dark:bg-zinc-900 p-8 rounded-[32px] w-full max-w-sm border border-gray-200 dark:border-zinc-800">
             <h2 class="text-xl font-bold mb-6">System Settings</h2>
-            <input id="new-key" type="password" placeholder="API Key" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-zinc-800 mb-3 outline-none">
-            <textarea id="new-models" placeholder="Models (comma separated)" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-zinc-800 mb-6 h-32 outline-none text-xs"></textarea>
-            <button onclick="save()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold">SAVE CONFIG</button>
+            <input id="new-key" type="password" placeholder="API Key" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-zinc-800 mb-3 outline-none dark:text-white">
+            <textarea id="new-models" placeholder="Models (comma separated)" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-zinc-800 mb-6 h-32 outline-none text-xs dark:text-white"></textarea>
+            <button onclick="save()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/20">SAVE CONFIG</button>
             <button onclick="document.getElementById('adm-modal').classList.add('hidden')" class="w-full mt-4 text-xs font-bold text-gray-400">CLOSE</button>
         </div>
     </div>
@@ -113,9 +117,9 @@
         let config = { key: "", models: [], active: "", user: null, isGuest: false };
 
         async function init() {
-            const { data } = await sb.auth.getSession();
-            if (data?.session) {
-                config.user = data.session.user;
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) {
+                config.user = session.user;
                 startApp();
             }
         }
@@ -136,13 +140,8 @@
         }
 
         function toggleTheme() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.theme = 'light';
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.theme = 'dark';
-            }
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.theme = isDark ? 'dark' : 'light';
         }
 
         function renderPills() {
@@ -160,9 +159,19 @@
         async function handleAuth(type) {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('pass').value.trim();
-            if(!email || !password) return alert("Missing fields.");
-            const { error } = type === 'in' ? await sb.auth.signInWithPassword({ email, password }) : await sb.auth.signUp({ email, password });
-            if(error) alert(error.message); else location.reload();
+            if(!email || !password) return alert("Please fill in all fields.");
+
+            const { data, error } = type === 'in' 
+                ? await sb.auth.signInWithPassword({ email, password }) 
+                : await sb.auth.signUp({ email, password });
+
+            if(error) {
+                alert(error.message);
+            } else if (type === 'up' && data.user && data.session === null) {
+                alert("Signup successful! Please check your email for a confirmation link (if enabled in Supabase) or try signing in.");
+            } else {
+                location.reload();
+            }
         }
 
         function continueAsGuest() {
@@ -176,7 +185,7 @@
             const txt = input.value.trim(); if(!txt) return;
             input.value = '';
             addMsg('user', txt);
-            const ai = addMsg('ai', 'Thinking...');
+            const ai = addMsg('ai', '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Thinking...');
 
             try {
                 const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -186,21 +195,22 @@
                 });
                 const d = await res.json();
                 const reply = d.choices[0].message.content;
-                ai.innerHTML = marked.parse(reply);
+                ai.innerHTML = `<div class="ai-reply-text">${marked.parse(reply)}</div>`;
                 if(!config.isGuest) {
                     await sb.from('messages').insert([{ user_id: config.user.id, role: 'user', content: txt }, { user_id: config.user.id, role: 'assistant', content: reply }]);
                     loadHistory();
                 }
-            } catch { ai.innerText = "Error checking API."; }
+            } catch { ai.innerText = "Error contacting AI. Check API key."; }
         }
 
         function addMsg(role, content) {
             const m = document.getElementById('messages');
             const d = document.createElement('div');
-            d.className = role === 'user' ? "ml-auto bg-gray-100 dark:bg-zinc-800 p-4 rounded-2xl max-w-[85%] text-sm" : "mr-auto p-4 max-w-full text-sm leading-relaxed";
-            d.innerHTML = role === 'ai' && content !== 'Thinking...' ? marked.parse(content) : content;
+            d.className = role === 'user' ? "ml-auto bg-blue-500 text-white p-4 rounded-2xl max-w-[85%] text-sm shadow-md" : "mr-auto p-4 max-w-full text-sm";
+            const icon = role === 'ai' ? '<i class="fa-solid fa-robot mr-3 text-blue-500"></i>' : '';
+            d.innerHTML = role === 'ai' && content !== 'Thinking...' ? `${icon}<div class="ai-reply-text">${marked.parse(content)}</div>` : content;
             m.appendChild(d);
-            document.getElementById('chat-container').scrollTo(0, m.scrollHeight);
+            document.getElementById('chat-container').scrollTo({ top: m.scrollHeight, behavior: 'smooth' });
             return d;
         }
 
@@ -211,8 +221,8 @@
             const unique = [...new Map(data.filter(m => m.role === 'user').map(x => [x.content.substring(0,30), x])).values()];
             unique.forEach(s => {
                 const item = document.createElement('div');
-                item.className = "p-3 text-[11px] opacity-50 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl cursor-pointer truncate transition-all";
-                item.innerHTML = s.content;
+                item.className = "p-3 text-[11px] opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl cursor-pointer truncate transition-all";
+                item.innerHTML = `<i class="fa-regular fa-message mr-2"></i> ${s.content}`;
                 list.appendChild(item);
             });
         }
